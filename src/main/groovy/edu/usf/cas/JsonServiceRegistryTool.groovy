@@ -7,32 +7,16 @@ class JsonServiceRegistryTool {
 
 	public static void main(String[] args) {
 
-		def defaultTheme = "default"
+		def config = new ConfigObject()
+
+		config.defaultTheme = "default"
 		
 		//All attributes that can be released by CAS
-		def releaseAttributes = [	"uid",
-									"eduPersonPrimaryAffiliation",
-									"cn",
-									"givenName",
-									"sn",
-									"USFeduUnumber",
-									"USFeduEmplid",
-									"namsid",
-									"mail",
-									"USFeduDepartment",
-									"USFeduCampus",
-									"MailStop",
-									"USFeduDepartment",
-									"USFeduCollege",
-									"Title",
-									"Phone",
-									"USFeduHost",
-									"eduPersonEntitlement",
-									"USFeduPrivacy",
-									"USFeduUserPrincipalName"]
-
+		config.releaseAttributes = []
 		//Require these attributes in addition to those required by the ServiceRegistry Class
-		def requiredAttributes = ["contactName","contactEmail","contactDept","contactPhone"]
+		config.requiredAttributes = []
+
+		def configFileName = System.getProperty("user.home")+'/cas-json-tool-config.groovy'
 	
 		//Parse command-line options
 		def cli = new CliBuilder(
@@ -57,6 +41,7 @@ class JsonServiceRegistryTool {
 			_ longOpt:'disableAnonymous', 'Disable opaque identifier', required: false
 			_ longOpt:'enableProxy', 'Allow service to request proxy tickets', required: false
 			_ longOpt:'disableProxy', 'Do not allow proxy ticket requests', required: false
+			_ longOpt:'defaults', args:1, argName:'configFileName', 'Groovy config file', required: false
 			_ longOpt:'priority', args:1, argName:'number', 'Service priority - used when multiple patterns match a URL (higher wins)', required: false
 			_ longOpt:'id', args:1, argName:'serviceID', 'Service ID number - valid with "--search", "--remove" or "--modify" ONLY', required: false
 			_ longOpt:'name', args:1, argName:'serviceName', 'service name', required: false
@@ -82,12 +67,24 @@ class JsonServiceRegistryTool {
 			System.exit(0)
 		}
 
+		//Read the config file data
+		if (opt.defaults) configFileName = opt.defaults
+
+		def configFile = new File(configFileName)
+		if ((! configFile.exists()) || (!configFile.canRead())) {
+			println "${configFile} is not readable or does not exist!"
+			System.exit(1)
+		}
+
+		def configFileData = new ConfigSlurper().parse(configFile.toURL())
+		config = config.merge(configFileData)
+
 		def jsonParser = new JsonServiceRegistryParser()
 		
 		//Set defaults
-		jsonParser.setCasAttributes releaseAttributes
-		jsonParser.setRequiredAttributes requiredAttributes
-		jsonParser.setDefaultTheme defaultTheme
+		jsonParser.setCasAttributes config.releaseAttributes
+		jsonParser.setRequiredAttributes config.requiredAttributes
+		jsonParser.setDefaultTheme config.defaultTheme
 
 		if(opt.input) jsonParser.readInputFile opt.input
 		if(opt.output) jsonParser.setOutput opt.output
