@@ -28,7 +28,12 @@ class JsonServiceRegistryParser {
 	/*
 	* Read the JSON file
 	*/
-	def JsonServiceRegistryParser(jsonFileName) {
+
+	def JsonServiceRegistryParser() {
+		jsonObject = [ services:[] ] 
+	}
+
+	def readInputFile(jsonFileName) {
 		def text = new File(jsonFileName).text
 		def slurper = new JsonSlurper()
 		jsonObject = slurper.parseText(text)
@@ -102,7 +107,7 @@ class JsonServiceRegistryParser {
 		jsonObject.services.each { service ->
 			idList.add(service.id)
 		}
-		idList.max() as Integer
+		idList.max() as Integer ?: 0
 	}
 
 	def addService(service){

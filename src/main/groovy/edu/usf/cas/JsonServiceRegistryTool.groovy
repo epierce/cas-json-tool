@@ -42,7 +42,7 @@ class JsonServiceRegistryTool {
 
 		cli.with {
 			h longOpt:'help', 'usage information', required: false 
-			i longOpt:'input', args:1, argName:'inputFilename', 'JSON file to read. REQUIRED', required: true
+			i longOpt:'input', args:1, argName:'inputFilename', 'JSON file to read.', required: false
 			o longOpt:'output', args:1, argName:'outputFilename', 'write output to this file.  Prints to STDOUT if omitted', required: false
 			f longOpt:'force', 'Overwrite output file', required: false
 			n longOpt:'new', 'Add new service', required: false
@@ -82,25 +82,29 @@ class JsonServiceRegistryTool {
 			System.exit(0)
 		}
 
-		def jsonParser = new JsonServiceRegistryParser(opt.input)
-		jsonParser.setCasAttributes(releaseAttributes)
-		jsonParser.setRequiredAttributes(requiredAttributes)
-		jsonParser.setDefaultTheme(defaultTheme)
-		if(opt.output)jsonParser.setOutput(opt.output)
-		if(opt.force)jsonParser.setClobber(true)
+		def jsonParser = new JsonServiceRegistryParser()
+		
+		//Set defaults
+		jsonParser.setCasAttributes releaseAttributes
+		jsonParser.setRequiredAttributes requiredAttributes
+		jsonParser.setDefaultTheme defaultTheme
+
+		if(opt.input) jsonParser.readInputFile opt.input
+		if(opt.output) jsonParser.setOutput opt.output
+		if(opt.force) jsonParser.setClobber true 
 
 		//Add a new service
 		if(opt.n){
 			jsonParser.checkOptions('new',opt)
 
-			def jsonService = jsonParser.createRegisteredService(opt)	
-			jsonParser.addService(jsonService)
+			def jsonService = jsonParser.createRegisteredService opt	
+			jsonParser.addService jsonService
 			jsonParser.printJSON()
 		//Remove a service
 		} else if (opt.r){
 			jsonParser.checkOptions('remove',opt)
 			
-			jsonParser.removeService(opt.id)
+			jsonParser.removeService opt.id
 			jsonParser.printJSON()
 		//Search for a service
 		} else if (opt.s){
@@ -111,10 +115,10 @@ class JsonServiceRegistryTool {
 		} else if (opt.m){
 			jsonParser.checkOptions('modify',opt)
 			
-			def origService = jsonParser.findById(opt.id)
+			def origService = jsonParser.findById opt.id
 			def newService = jsonParser.modifyService(origService,opt)
-			jsonParser.removeService(opt.id)
-			jsonParser.addService(newService)
+			jsonParser.removeService opt.id
+			jsonParser.addService newService
 			jsonParser.printJSON()
 		//No options, just display JSON
 		} else {
