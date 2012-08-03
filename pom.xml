@@ -1,0 +1,140 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>edu.usf.cas</groupId>
+  <artifactId>cas-json-tool</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <name>JSON CAS ServiceRegistry Manager</name>
+  <description>Commandline script for managing JSON-based CAS Service Registry</description>
+  <url>http://groovy.codehaus.org/Eclipse+Plugin</url>
+  <packaging>jar</packaging>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <licenses>
+        <license>
+            <name>Apache License v2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+        </license>
+    </licenses>
+
+  <developers>
+    <developer>
+      <id>epierce</id>
+      <name>Eric Pierce</name>
+      <email>epierce@usf.edu</email>
+    </developer>
+  </developers>
+
+  <issueManagement>
+    <url>https://github.com/epierce/cas-json-tool/issues</url>
+    <system>Github</system>
+  </issueManagement>
+
+  <scm>
+    <connection>scm:git:git@github.com:epierce/cas-json-tool.git</connection>
+    <developerConnection>scm:git:git@github.com:epierce/cas-json-tool.git</developerConnection>
+    <url>https://github.com/epierce/cas-json-tool</url>
+    <tag>master</tag>
+  </scm>
+  <organization>
+    <name>University of South Florida - Information Technology</name>
+    <url>http://www.it.usf.edu</url>
+  </organization>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jasig.cas</groupId>
+      <artifactId>cas-server-core</artifactId>
+      <version>3.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>net.unicon.cas</groupId>
+      <artifactId>cas-addons</artifactId>
+      <version>0.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+      <version>1.2</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <archive>
+            <manifest>
+                <mainClass>edu.usf.cas.JsonServiceRegistryTool</mainClass>
+                <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+            <phase>package</phase> <!-- bind to the packaging phase -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <compilerId>groovy-eclipse-compiler</compilerId>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-eclipse-compiler</artifactId>
+            <version>2.7.0-01</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <classpathPrefix>${user.home}/.m2/repository/</classpathPrefix>
+              <classpathLayoutType>repository</classpathLayoutType>
+              <mainClass>edu.usf.cas.JsonServiceRegistryTool</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.groovy</groupId>
+        <artifactId>groovy-eclipse-compiler</artifactId>
+        <version>2.7.0-01</version>
+        <extensions>true</extensions>
+      </plugin>
+    </plugins>
+  </build>
+    <!-- Jasig CAS Repository -->
+  <repositories>
+      <repository>
+          <id>ja-sig</id>
+          <url>http://oss.sonatype.org/content/repositories/releases/</url>
+      </repository>
+  </repositories>
+</project>
