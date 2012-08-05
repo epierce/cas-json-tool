@@ -9,15 +9,21 @@ class JsonServiceRegistryTool {
 
 		def config = new ConfigObject()
 
+		//Use this theme if one isn't specified with --theme 
 		config.defaultTheme = "default"
-		
 		//All attributes that can be released by CAS
 		config.releaseAttributes = []
+		//Allow these extra attributes to be saved for a service.  An empty list allows any attribute
+		config.allowedExtraAttributes = []
 		//Require these attributes in addition to those required by the ServiceRegistry Class
-		config.requiredAttributes = []
+		config.requiredExtraAttributes = []
 
-		def configFileName = System.getProperty("user.home")+'/cas-json-tool-config.groovy'
-	
+		/** Defaut configuration values can be set in $HOME/cas-json-tool-config.groovy **/                   
+		def defaultConfigFile = new File(System.getProperty("user.home")+'/cas-json-tool-config.groovy')
+		if (defaultConfigFile.exists() && defaultConfigFile.canRead()) {
+			config = config.merge(new ConfigSlurper().parse(defaultConfigFile.toURL()))
+		}
+
 		//Parse command-line options
 		def cli = new CliBuilder(
 						usage:"JsonServiceRegistryTool --input service_registry.json [options]",
@@ -28,32 +34,29 @@ class JsonServiceRegistryTool {
 			h longOpt:'help', 'usage information', required: false 
 			i longOpt:'input', args:1, argName:'inputFilename', 'JSON file to read.', required: false
 			o longOpt:'output', args:1, argName:'outputFilename', 'write output to this file.  Prints to STDOUT if omitted', required: false
-			f longOpt:'force', 'Overwrite output file', required: false
-			n longOpt:'new', 'Add new service', required: false
-			r longOpt:'remove', 'Remove service', required: false
-			m longOpt:'modify', 'Modify service', required: false
-			s longOpt:'search', 'Search for a service', required: false
-			_ longOpt:'enable', 'Enable a disabled service', required: false
-			_ longOpt:'disable', 'Disable a service', required: false
-			_ longOpt:'enableSSO', 'Enable SSO access', required: false
-			_ longOpt:'disableSSO', 'Disable Anonymous access', required: false
-			_ longOpt:'enableAnonymous', 'Enable opaque user identifier instead of NetID', required: false
-			_ longOpt:'disableAnonymous', 'Disable opaque identifier', required: false
-			_ longOpt:'enableProxy', 'Allow service to request proxy tickets', required: false
-			_ longOpt:'disableProxy', 'Do not allow proxy ticket requests', required: false
-			_ longOpt:'defaults', args:1, argName:'configFileName', 'Groovy config file', required: false
-			_ longOpt:'priority', args:1, argName:'number', 'Service priority - used when multiple patterns match a URL (higher wins)', required: false
-			_ longOpt:'id', args:1, argName:'serviceID', 'Service ID number - valid with "--search", "--remove" or "--modify" ONLY', required: false
+			f longOpt:'force', 'overwrite output file', required: false
+			n longOpt:'new', 'add new service', required: false
+			r longOpt:'remove', 'remove service', required: false
+			m longOpt:'modify', 'modify service', required: false
+			s longOpt:'search', 'search for a service', required: false
+			_ longOpt:'enable', 'enable a disabled service', required: false
+			_ longOpt:'disable', 'disable a service', required: false
+			_ longOpt:'enableSSO', 'enable SSO access', required: false
+			_ longOpt:'disableSSO', 'disable Anonymous access', required: false
+			_ longOpt:'enableAnonymous', 'enable opaque user identifier instead of NetID', required: false
+			_ longOpt:'disableAnonymous', 'disable opaque identifier', required: false
+			_ longOpt:'enableProxy', 'allow service to request proxy tickets', required: false
+			_ longOpt:'disableProxy', 'do not allow proxy ticket requests', required: false
+			_ longOpt:'defaults', args:1, argName:'configFileName', 'groovy config file', required: false
+			_ longOpt:'priority', args:1, argName:'number', 'service priority - used when multiple patterns match a URL (higher wins)', required: false
+			_ longOpt:'id', args:1, argName:'serviceID', 'service ID number - valid with "--search", "--remove" or "--modify" ONLY', required: false
 			_ longOpt:'name', args:1, argName:'serviceName', 'service name', required: false
 			_ longOpt:'desc', args:1, argName:'description', 'description', required: false
 			_ longOpt:'theme', args:1, argName:'theme', "CAS theme to use with this service.", required: false
 			_ longOpt:'pattern', args:1, argName:'pattern', 'regular expression or ant pattern to match service', required: false
 			_ longOpt:'url', args:1, argName:'url', 'sample URL to test the ant/regex pattern', required: false
-			_ longOpt:'release', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'attribute list', "add to attribute list (seperate multiple with commas)"
-			_ longOpt:'contactName', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'name(s)', "contact person(s) for this service (seperate multiple with commas)", required: false
-			_ longOpt:'contactEmail', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'email(s)', "contact email address(es) for this service (seperate multiple with commas)", required: false
-			_ longOpt:'contactPhone', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'phone number(s)', "contact phone number(s) for this service (seperate multiple with commas)", required: false
-			_ longOpt:'contactDept', args:1, argName:'college/department', "College or department this service belongs to", required: false
+			_ longOpt:'release', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'attribute list', "add to attribute list (separate multiple with commas)"
+			_ longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple time)", required: false
 		}
 
 		def opt = cli.parse(args)
@@ -67,23 +70,22 @@ class JsonServiceRegistryTool {
 			System.exit(0)
 		}
 
-		//Read the config file data
-		if (opt.defaults) configFileName = opt.defaults
-
-		def configFile = new File(configFileName)
-		if ((! configFile.exists()) || (!configFile.canRead())) {
-			println "${configFile} is not readable or does not exist!"
-			System.exit(1)
+		//Read the config file passed on the commandline
+		if (opt.defaults) {
+			def newConfigFile = new File(opt.defaults)
+			if (newConfigFile.exists() && newConfigFile.canRead()) {
+				config = config.merge(new ConfigSlurper().parse(newConfigFile.toURL()))
+			} else {
+				println "Defaults file (${opt.defaults}) cannot be read or does not exist!"
+				System.exit(1)
+			}
 		}
-
-		def configFileData = new ConfigSlurper().parse(configFile.toURL())
-		config = config.merge(configFileData)
 
 		def jsonParser = new JsonServiceRegistryParser()
 		
 		//Set defaults
 		jsonParser.setCasAttributes config.releaseAttributes
-		jsonParser.setRequiredAttributes config.requiredAttributes
+		jsonParser.setExtraServiceAttributes(config.allowedExtraAttributes,config.requiredExtraAttributes)
 		jsonParser.setDefaultTheme config.defaultTheme
 
 		if(opt.input) jsonParser.readInputFile opt.input

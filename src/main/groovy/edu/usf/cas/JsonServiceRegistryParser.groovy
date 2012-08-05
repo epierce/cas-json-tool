@@ -19,15 +19,11 @@ class JsonServiceRegistryParser {
 	private def clobber = false
 	private File outputFile
 	private def outputFileName
-	private def casAttributes
-	private def requiredAttributes
-	private def defaultTheme
+	private def casAttributes = []
+	private def requiredExtraAttributes = []
+	private def allowedExtraAttributes = []
+	private def defaultTheme = "default"
 	private def extraServiceAttributes = [createdDate:String.format('%tF', new Date())]
-
-
-	/*
-	* Read the JSON file
-	*/
 
 	def JsonServiceRegistryParser() {
 		jsonObject = [ services:[] ] 
@@ -56,8 +52,9 @@ class JsonServiceRegistryParser {
 		defaultTheme = theme
 	}
 
-	def setRequiredAttributes(attributes){
-		requiredAttributes = attributes
+	def setExtraServiceAttributes(allowedAttributes,requiredAttributes){
+		allowedExtraAttributes = allowedAttributes + requiredAttributes
+		requiredExtraAttributes = requiredAttributes
 	}
 
 	def checkOptions(function,options){
@@ -74,7 +71,8 @@ class JsonServiceRegistryParser {
 				if(!options.pattern) exitOnError('Regex or Ant pattern required!')
 				if(!options.url) exitOnError('Test URL required!')
 				if(options.release) checkCasAttributes(options.releases) 
-				checkRequiredAttributes(options)
+				addExtraServiceAttributes(options)
+				checkRequiredExtraAttributes(options)
 			break
 			case "remove":
 				if(!options.id) jsonParser.exitOnError('Service ID number required!') 
@@ -92,12 +90,10 @@ class JsonServiceRegistryParser {
 		}
 	}
 
-	def checkRequiredAttributes(options){
-		requiredAttributes.each { attribute ->
-			if(! options["${attribute}"]){
+	def checkRequiredExtraAttributes(options){
+		requiredExtraAttributes.each { attribute ->
+			if(! extraServiceAttributes["${attribute}"]){
 				exitOnError("Attribute ${attribute} is required!")
-			} else {
-				addExtraServiceAttribute(attribute,options["${attribute}"])
 			}
 		}
 	}
@@ -141,10 +137,38 @@ class JsonServiceRegistryParser {
 		return jsonService
 	}
 
-	def addExtraServiceAttribute(name,value){	
-		extraServiceAttributes.put(name,value)
-	}
+	def addExtraServiceAttributes(options){	
+		// Loop through the extraAttributes list and build a map
+		// There must be a cleaner way to do this 
+		int index = 0 
+        def key = null 
+        def attributeMap = [:]
+        options.extraAttributes.each { value-> 
+	        if ((index % 2) == 0) { 
+	            key = value 
+	        } else { 
+	        	if(! attributeMap[key]){
+	        		attributeMap[key] = [value]
+	        	} else {
+	        		attributeMap[key].add(value)
+	        	} 
+	        } 
+	        index++ 
+        } 
+        if ((index % 2) == 1) attributeMap[key] = null       
+  
+		//check that all attributes are allowed
+		if (allowedExtraAttributes.size() > 0) {
+			attributeMap.each { 
+				if(! allowedExtraAttributes.contains(it.key))exitOnError("Attribute ${it.key} is not allowed!")
+			}
+		}
 
+		//create the extraServiceAttributes map
+		attributeMap.each { 
+			extraServiceAttributes.put(it.key,it.value)
+		} 
+	}
 
 	def removeService(id){ 
 		def removeThisService = findById(id)
@@ -163,9 +187,6 @@ class JsonServiceRegistryParser {
 		if(options.disableAnonymous) origService.anonymousAccess = false
 		if(options.enableProxy) origService.allowedToProxy = true
 		if(options.disableProxy) origService.allowedToProxy = false
-		if(options.email) origService.extraAttributes.contactEmail = options.contactEmails
-		if(options.dept) origService.extraAttributes.contactDept = options.contactDept
-		if(options.contact) origService.extraAttributes.contactName = options.contactNames
 		if(options.name) origService.name = options.name
 		if(options.desc) origService.description = options.desc
 		if(options.theme) origService.theme = options.theme
@@ -179,19 +200,14 @@ class JsonServiceRegistryParser {
 	def searchForService(options){
 		def jsonService
 
-		if(options.contact){
-		}else if(options.email){
-			jsonService = findByEmail(options.email)
-		}else if(options.dept){
-			jsonService = findByDepartment(options.dept)
-		}else if(options.url){
+		if(options.url){
 			jsonService = findByUrl(options.url)
 		}else if(options.id){
 			jsonService = findById(options.id)
 		}else if(options.name){
 			jsonService = findByName(options.name)
 		}else {
-			exitOnError('Contact name, email, department, url, id, or name required!')
+			exitOnError('URL, id, or name required!')
 		}
 		return jsonService
 	}
@@ -214,7 +230,8 @@ class JsonServiceRegistryParser {
 		return foundService
 	}
 
-    def findByDepartment(deptPattern){
+/*
+    def findByContactDepartment(deptPattern){
        def foundService = []
        def pattern = ~/${deptPattern}/
        jsonObject.services.each { service ->
@@ -225,7 +242,7 @@ class JsonServiceRegistryParser {
        return foundService
     }
 
-	def findByEmail(emailPattern){
+	def findByContactEmail(emailPattern){
 		def foundService = []
 		def pattern = ~/${emailPattern}/
 		jsonObject.services.each { service ->
@@ -236,7 +253,8 @@ class JsonServiceRegistryParser {
 			}
 		}
 		return foundService
-}
+	}
+*/
 
 	def findByUrl(url){
 		def foundService = []

@@ -1,26 +1,20 @@
-defaultTheme = "usf"
+//Default theme for CAS login page
+defaultTheme = "default"
 
 //All attributes that can be released by CAS
-releaseAttributes = [	"uid",
-							"eduPersonPrimaryAffiliation",
-							"cn",
-							"givenName",
-							"sn",
-							"USFeduUnumber",
-							"USFeduEmplid",
-							"namsid",
-							"mail",
-							"USFeduDepartment",
-							"USFeduCampus",
-							"MailStop",
-							"USFeduDepartment",
-							"USFeduCollege",
-							"Title",
-							"Phone",
-							"USFeduHost",
-							"eduPersonEntitlement",
-							"USFeduPrivacy",
-							"USFeduUserPrincipalName"]
+releaseAttributes = ["uid",
+					"eduPersonPrimaryAffiliation",
+					"cn",
+					"givenName",
+					"sn",
+					"mail",
+					"Title",
+					"Phone"]
 
-//Require these attributes in addition to those required by the ServiceRegistry Class
-requiredAttributes = ["contactName","contactEmail","contactDept","contactPhone"]
+//Allow these extra attributes.  An empty list allows any attribute
+allowedExtraAttributes = []
+
+//Require these extra attributes for each service.  
+//Attributes in this list are automatically included in allowedExtraAttributes
+requiredExraAttributes = ["contactName","contactEmail","contactDept","contactPhone"]
+
