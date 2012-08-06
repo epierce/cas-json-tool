@@ -1,7 +1,7 @@
 # cas-json-tool
 =============
 
-JSON-based CAS ServiceRegistry configuration file editor
+JSON-based CAS ServiceRegistry configuration file editor.  This command creates/modifies JSON files that are compatible with [JsonServiceRegistryDao](https://github.com/Unicon/cas-addons/blob/master/src/main/java/net/unicon/cas/addons/serviceregistry/JsonServiceRegistryDao.java).
 
 ## Build
 You can build the project from source using the following Maven command:
