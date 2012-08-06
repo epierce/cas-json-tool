@@ -73,7 +73,7 @@ Read an existing JSON service-registry file (`cas_registry.json`)
              {
                  "enabled": true,
                  "ignoreAttributes": false,
-                 "theme": "usf",
+                 "theme": "default",
                  "id": 1,
                  "extraAttributes": {
                      "contactPhone": [
