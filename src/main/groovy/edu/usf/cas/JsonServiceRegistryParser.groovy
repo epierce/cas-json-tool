@@ -284,8 +284,6 @@ class JsonServiceRegistryParser {
 				exitOnError("${outputFileName} already exists.  Use --force to overwrite.")
 			} else {
 				outputFile.write("${jsonOut.prettyPrint(jsonOut.toJson(service))}\n")
-				println "Output written to ${outputFileName}\n"
-				System.exit(0)		
 			}
 		//output to screen
 		} else {

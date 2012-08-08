@@ -17,6 +17,10 @@ class JsonServiceRegistryTool {
 		config.allowedExtraAttributes = []
 		//Require these attributes in addition to those required by the ServiceRegistry Class
 		config.requiredExtraAttributes = []
+		//Run this command BEFORE processing. the input file is passed as an argument.
+		config.preCommand = ''
+		//Run this command AFTER processing.  the output file is passed as an argument.
+		config.postCommand = ''
 
 		/** Defaut configuration values can be set in $HOME/cas-json-tool-config.groovy **/                   
 		def defaultConfigFile = new File(System.getProperty("user.home")+'/cas-json-tool-config.groovy')
@@ -56,7 +60,7 @@ class JsonServiceRegistryTool {
 			_ longOpt:'pattern', args:1, argName:'pattern', 'regular expression or ant pattern to match service', required: false
 			_ longOpt:'url', args:1, argName:'url', 'sample URL to test the ant/regex pattern', required: false
 			_ longOpt:'release', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'attribute list', "add to attribute list (separate multiple with commas)"
-			_ longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple time)", required: false
+			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple time)", required: false
 		}
 
 		def opt = cli.parse(args)
@@ -79,6 +83,10 @@ class JsonServiceRegistryTool {
 				println "Defaults file (${opt.defaults}) cannot be read or does not exist!"
 				System.exit(1)
 			}
+		}
+
+		if (config.preCommand && opt.input){
+			println "${config.preCommand} ${opt.input}".execute().text
 		}
 
 		def jsonParser = new JsonServiceRegistryParser()
@@ -122,6 +130,10 @@ class JsonServiceRegistryTool {
 		//No options, just display JSON
 		} else {
 			jsonParser.printJSON()
+		}
+
+		if (config.postCommand){
+			println "${config.postCommand} ${opt.output}".execute().text
 		}
 	}
 

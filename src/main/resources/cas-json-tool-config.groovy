@@ -18,3 +18,7 @@ allowedExtraAttributes = []
 //Attributes in this list are automatically included in allowedExtraAttributes
 requiredExraAttributes = ["contactName","contactEmail","contactDept","contactPhone"]
 
+//Run this command BEFORE processing. the input file is passed as an argument.
+preCommand = ''
+//Run this command AFTER processing.  the output file is passed as an argument.
+postCommand = ''
