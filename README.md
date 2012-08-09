@@ -10,8 +10,8 @@ You can build the project from source using the following Maven command:
      
 Once the build is complete, you will be left with two jar files in the `target` directory:
 
-     cas-json-tool-0.1.jar
-     cas-json-tool-0.1-jar-with-dependencies.jar
+     cas-json-tool-0.1.1.jar
+     cas-json-tool-0.1.1-jar-with-dependencies.jar
 
 You can use either version, but the one including the dependencies has been slightly faster in my testing.
 ## Configuration
@@ -29,13 +29,18 @@ cas-json-tool will look for `cas-json-tool-config.groovy` in your home directory
 
     //Require these extra attributes for each service.  
     //Attributes in this list are automatically included in allowedExtraAttributes
-    requiredExraAttributes = ["contactName","contactEmail","contactDept","contactPhone"] 
+    requiredExraAttributes = ["contactName","contactEmail","contactDept","contactPhone"]
+    
+    //Run this command BEFORE processing. the input file is passed as an argument.
+    preCommand = ''
+    //Run this command AFTER processing.  the output file is passed as an argument.
+    postCommand = '' 
     
 ## Usage
 To see a list of all options, use the `--help` argument:
 
-    $ java -jar cas-json-tool-0.1.jar --help
-    usage: JsonServiceRegistryTool --input service_registry.json [options]
+    $ java -jar cas-json-tool-0.1.1.jar --help
+    usage: cas-json-tool --input service_registry.json [options]
     Available options (use -h for help):
         --defaults <configFileName>          groovy config file
         --desc <description>                 description
@@ -43,11 +48,12 @@ To see a list of all options, use the `--help` argument:
         --disableAnonymous                   disable opaque identifier
         --disableProxy                       do not allow proxy ticket requests
         --disableSSO                         disable Anonymous access
+     -e,--extraAttribute <attribute=value>   add arbitrary extra attribute/value for this service (can be used multiple times)
         --enable                             enable a disabled service
         --enableAnonymous                    enable opaque user identifier instead of NetID
         --enableProxy                        allow service to request proxy tickets
         --enableSSO                          enable SSO access
-        --extraAttribute <attribute=value>   add arbitrary extra attribute/value for this service (can be used multiple time)
+        --evalOrder <number>                 evaluation order - used when multiple patterns match a URL. Lower wins. (default: 100)
      -f,--force                              overwrite output file
      -h,--help                               usage information
      -i,--input <inputFilename>              JSON file to read.
@@ -57,7 +63,6 @@ To see a list of all options, use the `--help` argument:
         --name <serviceName>                 service name
      -o,--output <outputFilename>            write output to this file.  Prints to STDOUT if omitted
         --pattern <pattern>                  regular expression or ant pattern to match service
-        --priority <number>                  service priority - used when multiple patterns match a URL (higher wins)
      -r,--remove                             remove service
         --release <attribute list>           add to attribute list (separate multiple with commas)
      -s,--search                             search for a service
@@ -67,7 +72,7 @@ To see a list of all options, use the `--help` argument:
 ### Example: Display service registry contents
 Read an existing JSON service-registry file (`cas_registry.json`)
 
-     $ java -jar cas-json-tool-0.1.jar --input=cas_registry.json 
+     $ java -jar cas-json-tool-0.1.1.jar --input=cas_registry.json 
      {
          "services": [
              {
@@ -96,7 +101,7 @@ Read an existing JSON service-registry file (`cas_registry.json`)
                  "name": "Service Manager",
                  "ssoEnabled": true,
                  "anonymousAccess": false,
-                 "evaluationOrder": 0,
+                 "evaluationOrder": 100,
                  "allowedAttributes": [
                 
                  ]
@@ -107,7 +112,7 @@ Read an existing JSON service-registry file (`cas_registry.json`)
 ### Example: Create a new service
 Add a new  service then save the result as `/tmp/cas_service.json` 
 
-    $ java -jar cas-json-tool-0.1.jar \
+    $ java -jar cas-json-tool-0.1.1.jar \
     --new \
     --input=cas_registry.json \
     --name="My Service" \
@@ -154,7 +159,7 @@ Add a new  service then save the result as `/tmp/cas_service.json`
              "name": "My Service",
              "ssoEnabled": true,
              "anonymousAccess": false,
-             "evaluationOrder": 0,
+             "evaluationOrder": 100,
              "allowedAttributes": [
             
              ]
@@ -170,4 +175,5 @@ Add a new  service then save the result as `/tmp/cas_service.json`
     --enableProxy \
     --output=/tmp/cas_service.json \
     --force
+
     

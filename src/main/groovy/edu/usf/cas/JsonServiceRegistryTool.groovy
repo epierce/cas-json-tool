@@ -30,7 +30,7 @@ class JsonServiceRegistryTool {
 
 		//Parse command-line options
 		def cli = new CliBuilder(
-						usage:"JsonServiceRegistryTool --input service_registry.json [options]",
+						usage:"cas-json-tool --input service_registry.json [options]",
 						header:"\nAvailable options (use -h for help):\n",
 						width:100)
 
@@ -60,7 +60,7 @@ class JsonServiceRegistryTool {
 			_ longOpt:'pattern', args:1, argName:'pattern', 'regular expression or ant pattern to match service', required: false
 			_ longOpt:'url', args:1, argName:'url', 'sample URL to test the ant/regex pattern', required: false
 			_ longOpt:'release', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'attribute list', "add to attribute list (separate multiple with commas)"
-			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple time)", required: false
+			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple times)", required: false
 		}
 
 		def opt = cli.parse(args)
@@ -86,7 +86,13 @@ class JsonServiceRegistryTool {
 		}
 
 		if (config.preCommand && opt.input){
-			println "${config.preCommand} ${opt.input}".execute().text
+			def proc = "${config.preCommand} ${opt.input}".execute()
+			proc.waitFor()
+			println "${proc.in.text}"
+			if (proc.exitValue() != 0){
+				println "Preprocessor exited with an error!"
+				System.exit(1)
+			}
 		}
 
 		def jsonParser = new JsonServiceRegistryParser()
