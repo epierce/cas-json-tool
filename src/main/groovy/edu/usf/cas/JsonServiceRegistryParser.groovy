@@ -132,6 +132,11 @@ class JsonServiceRegistryParser {
 			if(options.disable) setEnabled false   //Services are enabled by default
 			if(options.disableSSO) setSsoEnabled false   //SSO is enabled by default
 			if(options.enableAnonymous) setAnonymousAccess true   //Anonymous is disabled by default
+			if(options.evalOrder) { 
+				setEvaluationOrder options.evalOrder.toInteger()
+			} else {
+				setEvaluationOrder 100
+			}
 			setAllowedToProxy options.enableProxy ?: false   //Proxy is enabled by default in CAS, but IMHO it should be disabled by default
 		}
 		return jsonService
@@ -187,6 +192,7 @@ class JsonServiceRegistryParser {
 		if(options.disableAnonymous) origService.anonymousAccess = false
 		if(options.enableProxy) origService.allowedToProxy = true
 		if(options.disableProxy) origService.allowedToProxy = false
+		if(options.evalOrder) origService.evaluationOrder = options.evalOrder.toInteger()
 		if(options.name) origService.name = options.name
 		if(options.desc) origService.description = options.desc
 		if(options.theme) origService.theme = options.theme

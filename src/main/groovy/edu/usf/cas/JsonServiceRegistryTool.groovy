@@ -52,7 +52,7 @@ class JsonServiceRegistryTool {
 			_ longOpt:'enableProxy', 'allow service to request proxy tickets', required: false
 			_ longOpt:'disableProxy', 'do not allow proxy ticket requests', required: false
 			_ longOpt:'defaults', args:1, argName:'configFileName', 'groovy config file', required: false
-			_ longOpt:'priority', args:1, argName:'number', 'service priority - used when multiple patterns match a URL (higher wins)', required: false
+			_ longOpt:'evalOrder', args:1, argName:'number', 'evaluation order - used when multiple patterns match a URL. Lower wins. (default: 100)', required: false
 			_ longOpt:'id', args:1, argName:'serviceID', 'service ID number - valid with "--search", "--remove" or "--modify" ONLY', required: false
 			_ longOpt:'name', args:1, argName:'serviceName', 'service name', required: false
 			_ longOpt:'desc', args:1, argName:'description', 'description', required: false
