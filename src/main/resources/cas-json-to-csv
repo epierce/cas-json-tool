@@ -1,0 +1,66 @@
+#!/usr/bin/env groovy
+@Grapes([
+   @Grab(group='net.sf.opencsv', module='opencsv', version='2.3')
+])
+
+import au.com.bytecode.opencsv.CSVWriter
+import groovy.json.JsonSlurper
+
+/**
+** Read a CAS JsonServiceRegistry file and output a CSV for easy-to-read lists of services/attributes.
+**
+** Eric Pierce <epierce@usf.edu>
+** 8/12/2012
+**/
+
+//Parse command-line options
+def cli = new CliBuilder(
+				usage:"cas-json-to-csv --input service_registry.json --output output.csv",
+				header:"\nAvailable options (use -h for help):\n",
+				width:100)
+
+cli.with {
+	h longOpt:'help', 'usage information', required: false 
+	i longOpt:'input', args:1, argName:'inputFilename', 'JSON file to read.', required: true
+	o longOpt:'output', args:1, argName:'outputFilename', 'CSV file to write.  Prints to STDOUT if omitted', required: true
+}
+
+def opt = cli.parse(args)
+
+//Exit if no options were given
+if(!opt)System.exit(1)
+
+//Display usage if --help is given
+if(opt.help) {
+	cli.usage() 
+	System.exit(0)
+}
+
+def fieldNames = ['createdDate','modifiedDate','id','name','description',
+'serviceId','enabled','allowedAttributes','contactEmail','contactDept','contactName','contactPhone',
+'ssoEnabled','allowedToProxy','anonymousAccess','evaluationOrder','theme','ignoreAttributes'] as String[]
+
+def text = new File(opt.input).text
+def slurper = new JsonSlurper()
+def jsonObject = slurper.parseText(text)
+
+def writer = new CSVWriter(new FileWriter(opt.output))
+
+writer.writeNext(fieldNames)
+
+jsonObject.services.each { service ->
+	def csv_line = [] 
+	fieldNames.each { field ->
+		if(service["${field}"]) {
+			csv_line.add(service["${field}"] as String)
+		} else if (service.extraAttributes["${field}"] as String) {
+			csv_line.add(service.extraAttributes["${field}"] as String)
+		} else {
+			csv_line.add('')
+		}
+	
+	}
+	
+	writer.writeNext(csv_line as String[])
+}
+writer.close()

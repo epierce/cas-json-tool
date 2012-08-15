@@ -1,0 +1,32 @@
+#!/bin/bash
+
+LOCAL_REPO="$CASTOOL_HOME/svn/$2"
+FILENAME=`basename $3`
+JIRA_ISSUE='USFCAS-3'
+
+case "$1" in
+
+"pre")	echo "Starting Pre-Processing..."
+	svn update $LOCAL_REPO
+
+	if [ ! -e $LOCAL_REPO/$FILENAME ]; then
+	echo "$LOCAL_REPO/$FILENAME does not exist!"
+	exit 1
+	fi
+
+	diff -q $LOCAL_REPO/$FILENAME $3
+
+	if [ $? == 1 ]; then
+		echo "Current version of JSON file doesn't match latest version in SVN"
+		exit 1
+	fi
+
+	;;
+"post")	echo "Starting Post-Processing..."	
+	cp $3 $LOCAL_REPO/$FILENAME
+	json-to-csv --input $LOCAL_REPO/$FILENAME --output $LOCAL_REPO/$FILENAME.csv
+
+	svn ci -m "$JIRA_ISSUE #comment Automatic commit from cas-json-tool" $LOCAL_REPO
+			
+	;;
+esac
