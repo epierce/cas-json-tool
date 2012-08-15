@@ -6,7 +6,6 @@
   <version>0.1.1</version>
   <name>JSON CAS ServiceRegistry Manager</name>
   <description>Commandline script for managing JSON-based CAS Service Registry</description>
-  <url>http://groovy.codehaus.org/Eclipse+Plugin</url>
   <packaging>jar</packaging>
 
   <properties>
