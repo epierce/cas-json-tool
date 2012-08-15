@@ -23,6 +23,10 @@ cp -f src/main/resources/cas-json-to-csv $1/cas-json-tool-$VERSION/bin/cas-json-
 cp -f src/main/resources/cas-json-tool $1/cas-json-tool-$VERSION/bin/cas-json-tool
 cp -f src/main/resources/svnProcess $1/cas-json-tool-$VERSION/bin/svnProcess
 
+chmod 755 $1/cas-json-tool-$VERSION/bin/svnProcess
+chmod 755 $1/cas-json-tool-$VERSION/bin/cas-json-tool
+chmod 755 $1/cas-json-tool-$VERSION/bin/cas-json-to-csv
+
 cd $1/cas-json-tool-$VERSION/lib
 ln -s cas-json-tool-$VERSION-jar-with-dependencies.jar cas-json-tool-latest.jar
 
