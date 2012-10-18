@@ -11,7 +11,7 @@ import net.unicon.cas.addons.serviceregistry.RegisteredServiceWithAttributesImpl
 /**
  * Parses/modifies JSON-based CAS service registry file.
  * @author Eric Pierce
- * @version 0.1
+ * @version 0.1.2
  */
 class JsonServiceRegistryParser {
 
@@ -33,6 +33,8 @@ class JsonServiceRegistryParser {
 		def text = new File(jsonFileName).text
 		def slurper = new JsonSlurper()
 		jsonObject = slurper.parseText(text)
+
+		if (! jsonObject.services) throw new JsonServiceRegistryFileFormatException()
 	}
 
 	def setClobber(clobberVal){
@@ -304,3 +306,5 @@ class JsonServiceRegistryParser {
 		System.exit(1)
 	}
 }
+
+class JsonServiceRegistryFileFormatException extends Exception{}
