@@ -4,7 +4,7 @@
             "serviceId": "https://example.org/**",
             "theme": "default",
             "extraAttributes": {
-                "createdDate": "2012-10-19"
+                "createdDate": "2012-10-31 21:23:44"
             },
             "ignoreAttributes": false,
             "id": 1,
@@ -13,7 +13,7 @@
             "ssoEnabled": true,
             "enabled": true,
             "allowedToProxy": false,
-            "description": "This is a New Service",
+            "description": "This is a new service",
             "evaluationOrder": 100,
             "name": "My Service",
             "allowedAttributes": [
