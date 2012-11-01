@@ -80,7 +80,7 @@ class JsonServiceRegistryParser {
 		if(!options.url) throw new IllegalArgumentException('Test URL required!')
 
 		if(options.release) checkCasAttributes(options.releases) 
-		extraServiceAttributes = addExtraServiceAttributes(options, extraServiceAttributes)
+		if(options.extraAttribute) extraServiceAttributes = addExtraServiceAttributes(options, extraServiceAttributes)
 		checkRequiredExtraAttributes(extraServiceAttributes)
 
 		def jsonService
@@ -186,7 +186,7 @@ class JsonServiceRegistryParser {
 			}
 		}
 		if(options.pattern) origService.serviceId = options.pattern
-		origService.extraAttributes = addExtraServiceAttributes(options,origService.extraAttributes)
+		if(options.extraAttribute) origService.extraAttributes = addExtraServiceAttributes(options,origService.extraAttributes)
 		origService.extraAttributes.modifiedDate = String.format('%tF %<tT', new Date())
 		checkRequiredExtraAttributes(origService.extraAttributes)
 

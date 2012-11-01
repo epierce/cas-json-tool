@@ -394,11 +394,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         notThrown(java.lang.IllegalArgumentException)
         result.services[0].name == "My Service"
         result.services[0].serviceId == "^https://example.org/.*"
-        result.services[0].enabled == true
-        result.services[0].anonymousAccess == false
-        result.services[0].ssoEnabled == true
-        result.services[0].allowedToProxy == false
-        result.services[0].evaluationOrder == 100
+        result.services[0].extraAttributes.size() == 1
     }
 
     def "Allow any extra attribute is allowedExtraAttributes is not set"() {
