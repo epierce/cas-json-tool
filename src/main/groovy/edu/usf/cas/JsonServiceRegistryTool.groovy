@@ -1,33 +1,35 @@
 package edu.usf.cas
 
+import groovy.json.*
 import groovy.util.CliBuilder
 import org.apache.commons.cli.Option
 
 class JsonServiceRegistryTool {
 
+	static def outputFile
+
 	public static void main(String[] args) {
 
-		def config = new ConfigObject()
+		try {			
+			def opt = getCommandLineOptions(args)
+			def config = getConfigSettings(opt)
+		
+			runPreProcessor(config, opt)
 
-		//Use this theme if one isn't specified with --theme 
-		config.defaultTheme = "default"
-		//All attributes that can be released by CAS
-		config.releaseAttributes = []
-		//Allow these extra attributes to be saved for a service.  An empty list allows any attribute
-		config.allowedExtraAttributes = []
-		//Require these attributes in addition to those required by the ServiceRegistry Class
-		config.requiredExtraAttributes = []
-		//Run this command BEFORE processing. the input file is passed as an argument.
-		config.preCommand = ''
-		//Run this command AFTER processing.  the output file is passed as an argument.
-		config.postCommand = ''
+			def jsonParser = createJSONparser(config,opt)
 
-		/** Defaut configuration values can be set in $HOME/cas-json-tool-config.groovy **/                   
-		def defaultConfigFile = new File(System.getProperty("user.home")+'/cas-json-tool-config.groovy')
-		if (defaultConfigFile.exists() && defaultConfigFile.canRead()) {
-			config = config.merge(new ConfigSlurper().parse(defaultConfigFile.toURL()))
+			def result = runAction(jsonParser,opt)
+		
+			printJSON(result)
+
+			runPostProcessor(config,opt)
+
+		}catch(Exception e) {
+			exitOnError e.message
 		}
+	}
 
+	private static getCommandLineOptions(String[] args){
 		//Parse command-line options
 		def cli = new CliBuilder(
 						usage:"cas-json-tool --input service_registry.json [options]",
@@ -63,84 +65,168 @@ class JsonServiceRegistryTool {
 			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple times)", required: false
 		}
 
-		def opt = cli.parse(args)
-
-		//Exit if no options were given
-		if(!opt)System.exit(1)
-
-		//Display usage if --help is given
-		if(opt.help) {
+		def options = cli.parse(args)
+		//Display usage if --help is given OR no input file AND not creating a new file
+		if( (options.help) || ((! options.i) && (! options.n)) ){
 			cli.usage() 
 			System.exit(0)
 		}
 
-		//Read the config file passed on the commandline
-		if (opt.defaults) {
-			def newConfigFile = new File(opt.defaults)
-			if (newConfigFile.exists() && newConfigFile.canRead()) {
-				config = config.merge(new ConfigSlurper().parse(newConfigFile.toURL()))
-			} else {
-				println "Defaults file (${opt.defaults}) cannot be read or does not exist!"
-				System.exit(1)
-			}
+		return options
+	}
+
+	private static getConfigSettings(options){
+		def config = new ConfigObject()
+
+		//Use this theme if one isn't specified with --theme 
+		config.defaultTheme = "default"
+		//All attributes that can be released by CAS
+		config.releaseAttributes = []
+		//Allow these extra attributes to be saved for a service.  An empty list allows any attribute
+		config.allowedExtraAttributes = []
+		//Require these attributes in addition to those required by the ServiceRegistry Class
+		config.requiredExtraAttributes = []
+		//Run this command BEFORE processing. the input file is passed as an argument.
+		config.preCommand = ''
+		//Run this command AFTER processing.  the output file is passed as an argument.
+		config.postCommand = ''
+
+		/** Defaut configuration values can be set in $HOME/cas-json-tool-config.groovy **/                   
+		def defaultConfigFile = new File(System.getProperty("user.home")+'/cas-json-tool-config.groovy')
+
+		//The default file is not required, so if it doesn't exist don't throw an exception
+		if (defaultConfigFile.exists() && defaultConfigFile.canRead()) {
+			config = config.merge(new ConfigSlurper().parse(defaultConfigFile.toURL()))
 		}
 
-		if (config.preCommand && opt.input){
-			def proc = "${config.preCommand} ${opt.input}".execute()
+		//Merge the defaults file that was passed on the commandline
+		if(options.defaults){
+			def newConfigFile = new File(options.defaults)
+			config = config.merge(new ConfigSlurper().parse(newConfigFile.toURL()))
+		}
+
+		return config
+	}
+
+	private static runPreProcessor(config,options){
+		if (config.preCommand && options.input){
+			def proc = "${config.preCommand} ${options.input}".execute()
 			proc.waitFor()
 			println "${proc.in.text}"
-			if (proc.exitValue() != 0){
-				println "Preprocessor exited with an error!"
-				System.exit(1)
-			}
-		}
-
-		def jsonParser = new JsonServiceRegistryParser()
-		
-		//Set defaults
-		jsonParser.setCasAttributes config.releaseAttributes
-		jsonParser.setExtraServiceAttributes(config.allowedExtraAttributes,config.requiredExtraAttributes)
-		jsonParser.setDefaultTheme config.defaultTheme
-
-		if(opt.input) jsonParser.readInputFile opt.input
-		if(opt.output) jsonParser.setOutput opt.output
-		if(opt.force) jsonParser.setClobber true 
-
-		//Add a new service
-		if(opt.n){
-			jsonParser.checkOptions('new',opt)
-
-			def jsonService = jsonParser.createRegisteredService opt	
-			jsonParser.addService jsonService
-			jsonParser.printJSON()
-		//Remove a service
-		} else if (opt.r){
-			jsonParser.checkOptions('remove',opt)
-			
-			jsonParser.removeService opt.id
-			jsonParser.printJSON()
-		//Search for a service
-		} else if (opt.s){
-			jsonParser.checkOptions('search',opt)
-			
-			jsonParser.printJSON(jsonParser.searchForService(opt))
-		//Modify service
-		} else if (opt.m){
-			jsonParser.checkOptions('modify',opt)
-			
-			def origService = jsonParser.findById opt.id
-			def newService = jsonParser.modifyService(origService,opt)
-			jsonParser.removeService opt.id
-			jsonParser.addService newService
-			jsonParser.printJSON()
-		//No options, just display JSON
-		} else {
-			jsonParser.printJSON()
-		}
-
-		if (config.postCommand){
-			println "${config.postCommand} ${opt.output}".execute().text
+			if (proc.exitValue() != 0) throw new ScriptException("Preprocessor exited with an error!")
 		}
 	}
 
+	private static runPostProcessor(config,options){
+		if (config.postCommand && options.output){
+			def proc = "${config.postCommand} ${options.output}".execute()
+			proc.waitFor()
+			println "${proc.in.text}"
+			if (proc.exitValue() != 0) throw new ScriptException("Postprocessor exited with an error!")
+		}
+	}
+
+	private static createJSONparser(config,options){
+		def jsonParser = new JsonServiceRegistryParser()
+		setDefaults(jsonParser,config)
+
+		if(options.input) jsonParser.setJsonData(readInputFile(options.input))
+		if(options.output) {
+			outputFile = new File(options.output)
+			if (! outputFile.exists()) {
+				outputFile.createNewFile()
+				outputFile.setWritable(true)
+			}else if (! options.force) {
+				throw new FileNotFoundException("${options.output} already exists.  Use --force to overwrite.")
+			//Make sure the file is writeable now so an exception can be thrown before doing any work	
+			}else if (! outputFile.canWrite()) {
+				throw new FileNotFoundException("${options.output} is not writeable.")
+			}
+		} else {
+			outputFile = false
+		}
+
+		return  jsonParser
+	}
+
+	private static setDefaults(parser,config) {
+		parser.setCasAttributes(config.releaseAttributes)
+		parser.setExtraServiceAttributes(config.allowedExtraAttributes,config.requiredExtraAttributes)
+		parser.setDefaultTheme(config.defaultTheme)
+	}
+
+	private static checkOptions(opt){
+		if((opt.enable)&&(opt.disable)) throw new IllegalArgumentException('--disable and --enable cannot be used together')
+		if((opt.enableSSO)&&(opt.disableSSO)) throw new IllegalArgumentException('--disableSSO and --enableSSO cannot be used together')
+		if((opt.enableAnonymous)&&(opt.disableAnonymous)) throw new IllegalArgumentException('--disableAnonymous and --enableAnonymous cannot be used together')
+		if((opt.enableProxy)&&(opt.disableProxy)) throw new IllegalArgumentException('--disableProxy and --enableProxy cannot be used together')
+		if((opt.id)&&(! opt.id.isInteger())) throw new IllegalArgumentException('ServiceID must be an Integer')
+
+		//Search and modify require --id
+		if((!opt.id) && ((opt.remove) || (opt.modify))) throw new IllegalArgumentException('Service ID number required!')
+	}
+
+	/**
+	* Read JSON data from file.  JSON data must contain a list with 0 or more elements named "services"
+	* @param jsonFileName	The file to read from.
+	* @return Object 	JSON Object 
+	* @throws IOException 	If an input exception occurred
+	* @throws JsonException If the included JSON data is malformed
+	*/
+	private static readInputFile(jsonFileName) {
+		def text = new File(jsonFileName).text
+		def slurper = new JsonSlurper()
+		slurper.parseText(text)
+	}
+
+	private static runAction(jsonParser,options) {
+		
+		checkOptions(options)
+
+		//Add a new service
+		if(options.n){
+			jsonParser.createService options
+
+		//Remove a service
+		} else if (options.r){
+
+			jsonParser.removeService options.id				
+			
+		//Search for a service
+		} else if (options.s){
+			def service = jsonParser.searchForService options
+
+			return service	
+		//Modify service
+		} else if (options.m){
+			
+			def origService = jsonParser.findById options.id
+			def newService = jsonParser.modifyService(origService[0],options)
+			
+			jsonParser.removeService options.id
+			jsonParser.addService newService
+				
+		}
+		
+		return jsonParser.jsonData
+		
+	}
+
+	private static printJSON(data) {
+		def jsonOut = new JsonOutput()
+
+		//Write to a file
+		if(outputFile) {
+			outputFile.write("${jsonOut.prettyPrint(jsonOut.toJson(data))}\n")
+
+		//output to screen
+		} else {
+			println "${jsonOut.prettyPrint(jsonOut.toJson(data))}\n"
+		}
+	}
+
+	private static exitOnError(errorString){
+		println("\nERROR: ${errorString}\n")
+		System.exit(1)
+	}
 }

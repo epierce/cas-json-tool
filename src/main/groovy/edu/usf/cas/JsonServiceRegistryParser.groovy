@@ -10,38 +10,29 @@ import net.unicon.cas.addons.serviceregistry.RegisteredServiceWithAttributesImpl
 
 /**
  * Parses/modifies JSON-based CAS service registry file.
- * @author Eric Pierce
- * @version 0.1
+ *
+ * @author Eric Pierce (epierce@usf.edu)
+ * @version 0.1.2
  */
 class JsonServiceRegistryParser {
 
-	private def jsonObject 
-	private def clobber = false
-	private File outputFile
-	private def outputFileName
+	private def jsonData 
 	private def casAttributes = []
 	private def requiredExtraAttributes = []
 	private def allowedExtraAttributes = []
 	private def defaultTheme = "default"
-	private def extraServiceAttributes = [createdDate:String.format('%tF', new Date())]
+	
 
+	/**
+	* Class constructor.
+	*/
 	def JsonServiceRegistryParser() {
-		jsonObject = [ services:[] ] 
+		jsonData = [ services:[] ] 
 	}
 
-	def readInputFile(jsonFileName) {
-		def text = new File(jsonFileName).text
-		def slurper = new JsonSlurper()
-		jsonObject = slurper.parseText(text)
-	}
-
-	def setClobber(clobberVal){
-		clobber = clobberVal
-	}
-
-	def setOutput(fileName) {
-		outputFile = new File(fileName)
-		outputFileName = fileName
+	def setJsonData(myjsonData) {
+		if (! myjsonData.services) throw new JsonServiceRegistryFileFormatException()
+		jsonData = myjsonData
 	}
 
 	def setCasAttributes(attributes){
@@ -57,69 +48,50 @@ class JsonServiceRegistryParser {
 		requiredExtraAttributes = requiredAttributes
 	}
 
-	def checkOptions(function,options){
-		if((options.enable)&&(options.disable)) exitOnError('--disable and --enable cannot be used together')
-		if((options.enableSSO)&&(options.disableSSO)) exitOnError('--disableSSO and --enableSSO cannot be used together')
-		if((options.enableAnonymous)&&(options.disableAnonymous)) exitOnError('--disableAnonymous and --enableAnonymous cannot be used together')
-		if((options.enableProxy)&&(options.disableProxy)) exitOnError('--disableProxy and --enableProxy cannot be used together')
-		if((options.id)&&(! options.id.isInteger())) exitOnError('ServiceID must be an Integer')
-
-		switch (function){
-			case "new":
-				if(!options.name) exitOnError('Service name required!') 
-				if(!options.desc) exitOnError('Service description Required!') 
-				if(!options.pattern) exitOnError('Regex or Ant pattern required!')
-				if(!options.url) exitOnError('Test URL required!')
-				if(options.release) checkCasAttributes(options.releases) 
-				addExtraServiceAttributes(options)
-				checkRequiredExtraAttributes(options)
-			break
-			case "remove":
-				if(!options.id) jsonParser.exitOnError('Service ID number required!') 
-			break
-			case "modify":
-				if(!options.id) jsonParser.exitOnError('Service ID number required!') 
-			break
-
-		}
-	}
-
 	def checkCasAttributes(releaseList){
 		releaseList.each { attribute ->
-			if(! casAttributes.contains(attribute)) exitOnError("Attribute ${attribute} can not be released")
+			if(! casAttributes.contains(attribute)) throw new IllegalArgumentException("Attribute ${attribute} can not be released")
 		}
 	}
 
-	def checkRequiredExtraAttributes(options){
+	def checkRequiredExtraAttributes(extraServiceAttributes){
 		requiredExtraAttributes.each { attribute ->
 			if(! extraServiceAttributes["${attribute}"]){
-				exitOnError("Attribute ${attribute} is required!")
+				throw new IllegalArgumentException("Attribute ${attribute} is required!")
 			}
 		}
 	}
 
 	def findHighestId(){
 		def idList = [] 
-		jsonObject.services.each { service ->
+		jsonData.services.each { service ->
 			idList.add(service.id)
 		}
 		idList.max() as Integer ?: 0
 	}
 
-	def addService(service){
-		jsonObject.services.add(service)
-	}
+	def createService(options){
 
-	def createRegisteredService(options){
+		def extraServiceAttributes = [createdDate:String.format('%tF %<tT', new Date())]
+
+		if(!options.name) throw new IllegalArgumentException('Service name required!') 
+		if(!options.desc) throw new IllegalArgumentException('Service description required!') 
+		if(!options.pattern) throw new IllegalArgumentException('Regex or Ant pattern required!')
+		if(!options.url) throw new IllegalArgumentException('Test URL required!')
+
+		if(options.release) checkCasAttributes(options.releases) 
+		extraServiceAttributes = addExtraServiceAttributes(options, extraServiceAttributes)
+		checkRequiredExtraAttributes(extraServiceAttributes)
+
 		def jsonService
  		if(options.pattern.startsWith('^')){ 
       	jsonService = new RegexRegisteredServiceWithAttributes()
 			def regexPattern = ~/${options.pattern}/
-			if (! regexPattern.matcher(options.url).matches()) exitOnError('Test URL does not match pattern')
+			if (! regexPattern.matcher(options.url).matches()) throw new IllegalArgumentException('Test URL does not match pattern')
 		}else{
 			jsonService = new RegisteredServiceWithAttributesImpl()
 			def matcher = new AntPathMatcher()
-			if (! matcher.match(options.pattern.toLowerCase(), options.url.toLowerCase()))  exitOnError('Test URL does not match pattern')
+			if (! matcher.match(options.pattern.toLowerCase(), options.url.toLowerCase())) throw new IllegalArgumentException('Test URL does not match pattern')
 		} 
 		jsonService.with {
 			setId findHighestId()+1
@@ -139,10 +111,14 @@ class JsonServiceRegistryParser {
 			}
 			setAllowedToProxy options.enableProxy ?: false   //Proxy is enabled by default in CAS, but IMHO it should be disabled by default
 		}
-		return jsonService
+		addService(jsonService)
 	}
 
-	def addExtraServiceAttributes(options){	
+	def addService(service){
+		jsonData.services.add(service)
+	}
+
+	def addExtraServiceAttributes(options, extraServiceAttributes){	
 		// Loop through the extraAttributes list and build a map
 		// There must be a cleaner way to do this 
 		int index = 0 
@@ -153,7 +129,11 @@ class JsonServiceRegistryParser {
 	            key = value 
 	        } else { 
 	        	if(! attributeMap[key]){
-	        		attributeMap[key] = [value]
+	        		if (value == 'REMOVE'){
+	        			if(extraServiceAttributes[key]) extraServiceAttributes.remove(key)
+	        		} else {
+	        			attributeMap[key] = [value]
+	        		}
 	        	} else {
 	        		attributeMap[key].add(value)
 	        	} 
@@ -165,24 +145,26 @@ class JsonServiceRegistryParser {
 		//check that all attributes are allowed
 		if (allowedExtraAttributes.size() > 0) {
 			attributeMap.each { 
-				if(! allowedExtraAttributes.contains(it.key))exitOnError("Attribute ${it.key} is not allowed!")
+				if(! allowedExtraAttributes.contains(it.key)) throw new IllegalArgumentException("Attribute ${it.key} is not allowed!")
 			}
 		}
 
 		//create the extraServiceAttributes map
-		attributeMap.each { 
-			extraServiceAttributes.put(it.key,it.value)
+		attributeMap.each {
+				extraServiceAttributes.put(it.key,it.value)
 		} 
+
+		return extraServiceAttributes
 	}
 
 	def removeService(id){ 
 		def removeThisService = findById(id)
-		jsonObject.services.remove(removeThisService)
+		jsonData.services.remove(removeThisService[0])
 	}
 
 	def modifyService(origService,options){
 		//make sure the attributes (if requested) can be released 
-		if(options.release) checkCasAttributes(options.releases)
+		if(options.release && options.release != "REMOVE") checkCasAttributes(options.releases)
 
 		if(options.enable) origService.enabled = true
 		if(options.disable) origService.enabled = false
@@ -196,75 +178,57 @@ class JsonServiceRegistryParser {
 		if(options.name) origService.name = options.name
 		if(options.desc) origService.description = options.desc
 		if(options.theme) origService.theme = options.theme
-		if(options.release) origService.allowedAttributes = options.releases
+		if(options.release) {
+			if(options.releases == ["REMOVE"]) {
+				origService.allowedAttributes = []
+			} else {
+				origService.allowedAttributes = options.releases
+			}
+		}
 		if(options.pattern) origService.serviceId = options.pattern
-		origService.extraAttributes.modifiedDate = String.format('%tF', new Date())
+		origService.extraAttributes = addExtraServiceAttributes(options,origService.extraAttributes)
+		origService.extraAttributes.modifiedDate = String.format('%tF %<tT', new Date())
+		checkRequiredExtraAttributes(origService.extraAttributes)
 
 		return origService
 	}
 
 	def searchForService(options){
-		def jsonService
+		def searchData = [ services:[] ]
 
 		if(options.url){
-			jsonService = findByUrl(options.url)
+			searchData.services = findByUrl(options.url)
 		}else if(options.id){
-			jsonService = findById(options.id)
+			searchData.services = findById(options.id)
 		}else if(options.name){
-			jsonService = findByName(options.name)
+			searchData.services = findByName(options.name)
 		}else {
-			exitOnError('URL, id, or name required!')
+			throw new IllegalArgumentException('URL, id, or name required!')
 		}
-		return jsonService
+		return searchData
 	}
 
 	def findById(id){
 		def foundService = []
-		jsonObject.services.each { service ->
+		jsonData.services.each { service ->
 			if(id.toInteger() == service.id) foundService.add(service) 
 		}
-		if (foundService.size != 1) exitOnError("Found ${foundService.size} Service IDs that match!")
-		return foundService[0]
+		if (foundService.size != 1) JsonServiceParserException("Found ${foundService.size} Service IDs that match!")
+		return foundService
 	}
 
 	def findByName(namePattern){
 		def foundService = []
 		def pattern = ~/${namePattern}/
-		jsonObject.services.each { service ->
+		jsonData.services.each { service ->
 			if(pattern.matcher(service.name).matches()) foundService.add(service) 
 		}
 		return foundService
 	}
 
-/*
-    def findByContactDepartment(deptPattern){
-       def foundService = []
-       def pattern = ~/${deptPattern}/
-       jsonObject.services.each { service ->
-			if(service.extraAttributes.contactDept){
-          if(pattern.matcher(service.extraAttributes.contactDept).matches()) foundService.add(service) 
-		   }
-       }
-       return foundService
-    }
-
-	def findByContactEmail(emailPattern){
-		def foundService = []
-		def pattern = ~/${emailPattern}/
-		jsonObject.services.each { service ->
-		  if(service.extraAttributes.contactEmail){
-				service.extraAttributes.contactEmail.each { email ->
-					if(pattern.matcher(email).matches()) foundService.add(service) 
-				}
-			}
-		}
-		return foundService
-	}
-*/
-
 	def findByUrl(url){
 		def foundService = []
-		jsonObject.services.each { service ->
+		jsonData.services.each { service ->
 			if(service.serviceId.startsWith("^")){
 				def pattern = ~/${service.serviceId}/
 				if(pattern.matcher(url).matches()) foundService.add(service)
@@ -275,32 +239,8 @@ class JsonServiceRegistryParser {
 		}
 		return foundService
 	}
-
-	def printJSON() {
-		printJSON(jsonObject)
-	}
-
-	def printJSON(service) {
-		def jsonOut = new JsonOutput()
-
-		//Write to a file
-		if(outputFile){
-			//Don't overwrite a file unless told to
-			if((! clobber)&&(outputFile.exists())) {
-				exitOnError("${outputFileName} already exists.  Use --force to overwrite.")
-			} else {
-				outputFile.write("${jsonOut.prettyPrint(jsonOut.toJson(service))}\n")
-			}
-		//output to screen
-		} else {
-			println "${jsonOut.prettyPrint(jsonOut.toJson(service))}\n"
-			System.exit(0)
-		}
-
-	}
-
-	def exitOnError(errorString){
-		println("\n${errorString}\n")
-		System.exit(1)
-	}
 }
+
+class JsonServiceRegistryFileFormatException extends RuntimeException{}
+
+class JsonServiceParserException extends RuntimeException{}
