@@ -72,7 +72,7 @@ class JsonServiceRegistryParser {
 
 	def createService(options){
 
-		def extraServiceAttributes = [createdDate:String.format('%tF %<tT', new Date())]
+		def extraServiceAttributes = [createdDate:String.format('%tF %<tT %<tz', new Date())]
 
 		if(!options.name) throw new IllegalArgumentException('Service name required!') 
 		if(!options.desc) throw new IllegalArgumentException('Service description required!') 
@@ -187,7 +187,7 @@ class JsonServiceRegistryParser {
 		}
 		if(options.pattern) origService.serviceId = options.pattern
 		if(options.extraAttribute) origService.extraAttributes = addExtraServiceAttributes(options,origService.extraAttributes)
-		origService.extraAttributes.modifiedDate = String.format('%tF %<tT', new Date())
+		origService.extraAttributes.modifiedDate = String.format('%tF %<tT  %<tz', new Date())
 		checkRequiredExtraAttributes(origService.extraAttributes)
 
 		return origService
