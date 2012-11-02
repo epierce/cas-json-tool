@@ -57,6 +57,7 @@ class JsonServiceRegistryTool {
 			_ longOpt:'evalOrder', args:1, argName:'number', 'evaluation order - used when multiple patterns match a URL. Lower wins. (default: 100)', required: false
 			_ longOpt:'id', args:1, argName:'serviceID', 'service ID number - valid with "--search", "--remove" or "--modify" ONLY', required: false
 			_ longOpt:'name', args:1, argName:'serviceName', 'service name', required: false
+			_ longOpt:'userAttribute', args:1, argName:'usernameAttribute', 'Alternate Username attribute', required: false
 			_ longOpt:'desc', args:1, argName:'description', 'description', required: false
 			_ longOpt:'theme', args:1, argName:'theme', "CAS theme to use with this service.", required: false
 			_ longOpt:'pattern', args:1, argName:'pattern', 'regular expression or ant pattern to match service', required: false

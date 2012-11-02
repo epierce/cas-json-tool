@@ -83,6 +83,10 @@ class JsonServiceRegistryParser {
 		if(options.extraAttribute) extraServiceAttributes = addExtraServiceAttributes(options, extraServiceAttributes)
 		checkRequiredExtraAttributes(extraServiceAttributes)
 
+		if((options.userAttribute) && (! options.releases.contains(options.userAttribute))) {
+			throw new IllegalArgumentException("Username Attribute ${options.userAttribute} is not being released for this service")
+		}
+
 		def jsonService
  		if(options.pattern.startsWith('^')){ 
       	jsonService = new RegexRegisteredServiceWithAttributes()
@@ -101,6 +105,7 @@ class JsonServiceRegistryParser {
 			setTheme options.theme ?: defaultTheme
 			setAllowedAttributes options.releases ?: []
 			setExtraAttributes extraServiceAttributes
+			if(options.userAttribute) setUsernameAttribute options.userAttribute
 			if(options.disable) setEnabled false   //Services are enabled by default
 			if(options.disableSSO) setSsoEnabled false   //SSO is enabled by default
 			if(options.enableAnonymous) setAnonymousAccess true   //Anonymous is disabled by default
@@ -166,6 +171,8 @@ class JsonServiceRegistryParser {
 		//make sure the attributes (if requested) can be released 
 		if(options.release && options.release != "REMOVE") checkCasAttributes(options.releases)
 
+		
+
 		if(options.enable) origService.enabled = true
 		if(options.disable) origService.enabled = false
 		if(options.enableSSO) origService.ssoEnabled = true
@@ -181,8 +188,16 @@ class JsonServiceRegistryParser {
 		if(options.release) {
 			if(options.releases == ["REMOVE"]) {
 				origService.allowedAttributes = []
+				origService.usernameAttribute = null
 			} else {
 				origService.allowedAttributes = options.releases
+			}
+		}
+		if(options.userAttribute) {
+			if (! origService.allowedAttributes.contains(options.userAttribute)) {
+				throw new IllegalArgumentException("Username Attribute ${options.userAttribute} is not being released for this service")
+			} else {
+				origService.usernameAttribute = options.userAttribute
 			}
 		}
 		if(options.pattern) origService.serviceId = options.pattern

@@ -469,6 +469,33 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         result.services[0].allowedAttributes == ['name','email']
     }
 
+    def "Release different username attribute to a service"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--new',
+                            '--name=My Service', 
+                            '--desc=Test Service', 
+                            '--pattern=https://example.org/**', 
+                            '--url=https://example.org/index.php',
+                            '--userAttribute=email',
+                            '--release=name,email'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        config.releaseAttributes = ['name','email']
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        notThrown(java.lang.IllegalArgumentException)
+        result.services[0].name == "My Service"
+        result.services[0].serviceId == "https://example.org/**"
+        result.services[0].allowedAttributes == ['name','email']
+        result.services[0].usernameAttribute == "email"
+    }
+
     def "Release attribute not in the allowed list"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
@@ -490,6 +517,30 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         then:
         def e = thrown(java.lang.IllegalArgumentException)
         e.message == 'Attribute email can not be released'
+    }
+
+    def "Release usernameAttribute not in the allowed list"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--new',
+                            '--name=My Service', 
+                            '--desc=Test Service', 
+                            '--pattern=https://example.org/**', 
+                            '--url=https://example.org/index.php',
+                            '--release=name',
+                            '--userAttribute=email'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        config.releaseAttributes = ['name',]
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        def e = thrown(java.lang.IllegalArgumentException)
+        e.message == 'Username Attribute email is not being released for this service'
     }
 
     def "Create new service with extra attributes"() {
@@ -678,6 +729,56 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         result.services.last().allowedAttributes == ["email"]
     }
 
+    def "Update username attribute"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--modify',
+                            '--id=1',
+                            '--input=src/test/resources/serviceRegistry.json',
+                            '--release=email',
+                            '--userAttribute=email'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        config.releaseAttributes = ["name","email"]
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+        assert jsonParser.jsonData.services[0].allowedAttributes == ["name","email"]
+        assert jsonParser.jsonData.services[0].usernameAttribute == null
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        notThrown(java.lang.IllegalArgumentException)
+        result.services.last().name == "Example Application"
+        result.services.last().allowedAttributes == ["email"]
+        result.services.last().usernameAttribute == "email"
+    }
+
+       def "Update username attribute to one that is not released"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--modify',
+                            '--id=1',
+                            '--input=src/test/resources/serviceRegistry.json',
+                            '--release=email',
+                            '--userAttribute=name'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        config.releaseAttributes = ["name","email"]
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+        assert jsonParser.jsonData.services[0].allowedAttributes == ["name","email"]
+        assert jsonParser.jsonData.services[0].usernameAttribute == null
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        def e = thrown(java.lang.IllegalArgumentException)
+        e.message == "Username Attribute name is not being released for this service"
+    }
+
     def "Remove release attributes"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
@@ -699,6 +800,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         notThrown(java.lang.IllegalArgumentException)
         result.services.last().name == "Example Application"
         result.services.last().allowedAttributes == []
+        result.services.last().usernameAttribute == null
     }
 
     def "Remove extraAttribute from service"() {
