@@ -1,5 +1,25 @@
 #!/bin/bash
-
+#######
+## Pre/Post-Processing example script
+## Eric Pierce (epierce@usf.edu) 11/2/2012
+##
+## This script takes three parameters:
+##   svnProcess ACTION ENVIRONMENT FILE
+##
+##  ACTION: either "pre" or "post" 
+##      - "pre" ensures the JSON file in SVN matches the on in use
+##      - "post" checks the updated JSON file into SVN
+##
+##  ENVIRONMENT: The CAS environment this JSON file is associated with.  
+##  At USF we use multiple CAS instances and have dev/pre-prod/prod environments, 
+##  so ours look like this:
+##     LDAP authenticated                  Social network authenticated
+##     Development/netid                   Development/social
+##     PreProduction/netid                 PreProduction/social
+##     Production/netid                    Production/social
+##
+##  FILE: JSON file that is being checked in
+#########
 LOCAL_REPO="$CASTOOL_HOME/svn/$2"
 FILENAME=`basename $3`
 JIRA_ISSUE='USFCAS-3'

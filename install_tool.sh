@@ -1,9 +1,9 @@
 #!/bin/bash
 
-VERSION="0.1.1"
+VERSION="0.2.0"
 
 if [ ! -n "$1" ]; then
-    echo "Usage: install_cas-json-tool.sh <install_dir>"
+    echo "Usage: install_tool.sh <install_dir>"
     exit 1
 fi
 
@@ -31,6 +31,9 @@ cd $1/cas-json-tool-$VERSION/lib
 ln -s cas-json-tool-$VERSION-jar-with-dependencies.jar cas-json-tool-latest.jar
 
 cd $1
+if [ -h cas-json-tool ] ; then
+	rm cas-json-tool
+fi
 ln -s cas-json-tool-$VERSION cas-json-tool
 
 echo ''

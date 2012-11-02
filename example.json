@@ -1,0 +1,24 @@
+{
+    "services": [
+        {
+            "serviceId": "https://example.org/**",
+            "theme": "default",
+            "extraAttributes": {
+                "createdDate": "2012-11-02 09:05:36 -0500"
+            },
+            "ignoreAttributes": false,
+            "id": 1,
+            "usernameAttribute": null,
+            "anonymousAccess": false,
+            "ssoEnabled": true,
+            "enabled": true,
+            "allowedToProxy": false,
+            "description": "This is a new service",
+            "evaluationOrder": 100,
+            "name": "My Service",
+            "allowedAttributes": [
+                
+            ]
+        }
+    ]
+}

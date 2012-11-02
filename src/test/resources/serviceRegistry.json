@@ -1,0 +1,48 @@
+{
+    "services": [
+        {
+            "enabled": true,
+            "ignoreAttributes": false,
+            "theme": "default",
+            "id": 1,
+            "extraAttributes": {
+                "contactEmail": [ "admin@example.edu" ],
+                "contactName": [ "Admin User" ],
+                "createdDate": [ "2012-06-29" ]
+            },
+            "allowedToProxy": true,
+            "serviceId": "^https://www.example.edu:443/.*",
+            "description": "This is an example application",
+            "name": "Example Application",
+            "ssoEnabled": true,
+            "anonymousAccess": false,
+            "evaluationOrder": 0,
+            "allowedAttributes": [
+                "name",
+                "email" 
+            ]
+        },
+        {
+            "enabled": false,
+            "ignoreAttributes": false,
+            "theme": "default",
+            "id": 2,
+            "extraAttributes": {
+                "contactEmail": [ "admin@example.edu" ],
+                "contactName": [ "Admin User" ],
+                "createdDate": [ "2012-10-29" ]
+            },
+            "allowedToProxy": true,
+            "serviceId": "https://portal.example.edu/**",
+            "description": "This is the campus portal",
+            "name": "Portal Server",
+            "ssoEnabled": true,
+            "anonymousAccess": false,
+            "evaluationOrder": 0,
+            "allowedAttributes": [
+                "name",
+                "email" 
+            ]
+        },
+    ]
+}
