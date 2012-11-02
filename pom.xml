@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.usf.cas</groupId>
   <artifactId>cas-json-tool</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.2.0</version>
   <name>JSON CAS ServiceRegistry Manager</name>
   <description>Commandline script for managing JSON-based CAS Service Registry</description>
   <packaging>jar</packaging>

@@ -6,6 +6,7 @@ import org.apache.commons.cli.Option
 
 class JsonServiceRegistryTool {
 
+	static def version = "0.2.0"
 	static def outputFile
 
 	public static void main(String[] args) {
@@ -37,7 +38,8 @@ class JsonServiceRegistryTool {
 						width:100)
 
 		cli.with {
-			h longOpt:'help', 'usage information', required: false 
+			h longOpt:'help', 'usage information', required: false
+			v longOpt:'version', 'version information', required: false  
 			i longOpt:'input', args:1, argName:'inputFilename', 'JSON file to read.', required: false
 			o longOpt:'output', args:1, argName:'outputFilename', 'write output to this file.  Prints to STDOUT if omitted', required: false
 			f longOpt:'force', 'overwrite output file', required: false
@@ -67,6 +69,13 @@ class JsonServiceRegistryTool {
 		}
 
 		def options = cli.parse(args)
+
+		//Display version info
+		if(options.version){
+			println "\nVersion: ${version}\n"
+			System.exit(0)
+		}
+
 		//Display usage if --help is given OR no input file AND not creating a new file
 		if( (options.help) || ((! options.i) && (! options.n)) ){
 			cli.usage() 
