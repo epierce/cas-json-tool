@@ -153,7 +153,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         file.delete()
     }
 
-       def "Force option required to overwrite output file"() {
+       def "Force option required to overwrite output JSON file"() {
         given:
         def file = new File("write_fail.test.json")
         file.createNewFile()
@@ -174,7 +174,28 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         file.delete()
     }
 
-    def "Cannot write to output file"() {
+      def "Force option required to overwrite output CSV file"() {
+	given:
+	def file = new File("write_fail.test.csv")
+	file.createNewFile()
+
+	def jsonTool = new JsonServiceRegistryTool()
+	String[] args = ['--input=src/test/resources/serviceRegistry.json','--csv=write_fail.test.csv']
+	def opt = jsonTool.getCommandLineOptions(args)
+	def config = jsonTool.getConfigSettings(opt)
+
+	when:
+	def jsonParser = jsonTool.createJSONparser(config,opt)
+
+	then:
+	def e = thrown(java.io.FileNotFoundException)
+	e.message == "write_fail.test.csv already exists.  Use --force to overwrite."
+
+	cleanup:
+	file.delete()
+    }
+
+    def "Cannot write to output JSON file"() {
         given:
         def file = new File("write_fail.test.json")
         file.createNewFile()
@@ -194,6 +215,28 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         cleanup:
         file.setWritable(true)
         file.delete()
+    }
+
+    def "Cannot write to output CSV file"() {
+	given:
+	def file = new File("write_fail.test.csv")
+	file.createNewFile()
+	file.setWritable(false)
+
+	def jsonTool = new JsonServiceRegistryTool()
+	String[] args = ['--input=src/test/resources/serviceRegistry.json','--csv=write_fail.test.csv','--force']
+	def opt = jsonTool.getCommandLineOptions(args)
+	def config = jsonTool.getConfigSettings(opt)
+
+	when:
+	def jsonParser = jsonTool.createJSONparser(config,opt)
+
+	then:
+	thrown(java.io.FileNotFoundException)
+
+	cleanup:
+	file.setWritable(true)
+	file.delete()
     }
 
     def "--name is required"() {

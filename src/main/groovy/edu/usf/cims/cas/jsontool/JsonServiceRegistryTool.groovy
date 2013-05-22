@@ -3,11 +3,13 @@ package edu.usf.cims.cas.jsontool
 import groovy.json.*
 import groovy.util.CliBuilder
 import org.apache.commons.cli.Option
+import au.com.bytecode.opencsv.CSVWriter
 
 class JsonServiceRegistryTool {
 
 	static def version = "0.2.5"
-	static def outputFile
+  static def jsonOutputFile
+  static def csvOutputFileName
 
 	public static void main(String[] args) {
 
@@ -22,6 +24,8 @@ class JsonServiceRegistryTool {
 			def result = runAction(jsonParser,opt)
 		
 			printJSON(result)
+
+      if(opt.csv) printCSV(result)
 
 			runPostProcessor(config,opt)
 
@@ -66,6 +70,7 @@ class JsonServiceRegistryTool {
 			_ longOpt:'url', args:1, argName:'url', 'sample URL to test the ant/regex pattern', required: false
 			_ longOpt:'release', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'attribute list', "add to attribute list (separate multiple with commas)"
 			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple times)", required: false
+      _ longOpt:'csv', args:1, argName:'CSVfileName', 'Write data to a CSV file', required: false
 		}
 
 		def options = cli.parse(args)
@@ -142,19 +147,33 @@ class JsonServiceRegistryTool {
 
 		if(options.input) jsonParser.setJsonData(readInputFile(options.input))
 		if(options.output) {
-			outputFile = new File(options.output)
-			if (! outputFile.exists()) {
-				outputFile.createNewFile()
-				outputFile.setWritable(true)
+			jsonOutputFile = new File(options.output)
+			if (! jsonOutputFile.exists()) {
+				jsonOutputFile.createNewFile()
+				jsonOutputFile.setWritable(true)
 			}else if (! options.force) {
 				throw new FileNotFoundException("${options.output} already exists.  Use --force to overwrite.")
 			//Make sure the file is writeable now so an exception can be thrown before doing any work	
-			}else if (! outputFile.canWrite()) {
+			}else if (! jsonOutputFile.canWrite()) {
 				throw new FileNotFoundException("${options.output} is not writeable.")
 			}
 		} else {
-			outputFile = false
+			jsonOutputFile = false
 		}
+
+    if(options.csv) {
+      csvOutputFileName = options.csv
+      def csvOutputFile = new File(options.csv)
+      if (! csvOutputFile.exists()) {
+	csvOutputFile.createNewFile()
+	csvOutputFile.setWritable(true)
+      }else if (! options.force) {
+	throw new FileNotFoundException("${options.csv} already exists.  Use --force to overwrite.")
+      //Make sure the file is writeable now so an exception can be thrown before doing any work
+      }else if (! csvOutputFile.canWrite()) {
+	throw new FileNotFoundException("${options.csv} is not writeable.")
+      }
+    }
 
 		return  jsonParser
 	}
@@ -226,14 +245,39 @@ class JsonServiceRegistryTool {
 		def jsonOut = new JsonOutput()
 
 		//Write to a file
-		if(outputFile) {
-			outputFile.write("${jsonOut.prettyPrint(jsonOut.toJson(data))}\n")
+		if(jsonOutputFile) {
+			jsonOutputFile.write("${jsonOut.prettyPrint(jsonOut.toJson(data))}\n")
 
 		//output to screen
 		} else {
 			println "${jsonOut.prettyPrint(jsonOut.toJson(data))}\n"
 		}
 	}
+
+  private static printCSV(data) {
+    def writer = new CSVWriter(new FileWriter(csvOutputFileName))
+
+    def fieldNames = ['createdDate','modifiedDate','id','name','description','serviceId','enabled','allowedAttributes','contactEmail','contactDept','contactName','contactPhone','ssoEnabled','allowedToProxy','anonymousAccess','evaluationOrder','theme','ignoreAttributes'] as String[]
+
+    writer.writeNext(fieldNames)
+
+    data.services.each { service ->
+      def csv_line = []
+      fieldNames.each { field ->
+	if(service["${field}"]) {
+	  csv_line.add(service["${field}"] as String)
+	} else if (service.extraAttributes["${field}"] as String) {
+	  csv_line.add(service.extraAttributes["${field}"] as String)
+	} else {
+	  csv_line.add('')
+	}
+
+      }
+
+      writer.writeNext(csv_line as String[])
+    }
+    writer.close()
+  }
 
 	private static exitOnError(errorString){
 		println("\nERROR: ${errorString}\n")

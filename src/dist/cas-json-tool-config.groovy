@@ -7,7 +7,7 @@ releaseAttributes = ["uid","eduPersonPrimaryAffiliation","cn","givenName","sn","
 //Allow these extra attributes.  An empty list allows any attribute
 allowedExtraAttributes = []
 
-//Require these extra attributes for each service.  
+//Require these extra attributes for each service.
 //Attributes in this list are automatically included in allowedExtraAttributes
 requiredExtraAttributes = ["contactName","contactEmail","contactDept","contactPhone"]
 

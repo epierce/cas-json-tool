@@ -20,6 +20,7 @@ project.ext {
   commonsCliVersion = '1.2'
   casAddonsVersion = '1.5'
   spockVersion = '0.7-groovy-2.0'
+  opencsvVersion = '2.3'
 }
 
 dependencies {
@@ -27,6 +28,7 @@ dependencies {
     compile "org.jasig.cas:cas-server-core:${casVersion}"
     compile "net.unicon.cas:cas-addons:${casAddonsVersion}"
     compile "commons-cli:commons-cli:${commonsCliVersion}"
+    compile "net.sf.opencsv:opencsv:${opencsvVersion}"
 
     testCompile "org.spockframework:spock-core:${spockVersion}" 
 }

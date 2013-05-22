@@ -6,12 +6,12 @@
 ## This script takes three parameters:
 ##   svnProcess ACTION ENVIRONMENT FILE
 ##
-##  ACTION: either "pre" or "post" 
+##  ACTION: either "pre" or "post"
 ##      - "pre" ensures the JSON file in SVN matches the on in use
 ##      - "post" checks the updated JSON file into SVN
 ##
-##  ENVIRONMENT: The CAS environment this JSON file is associated with.  
-##  At USF we use multiple CAS instances and have dev/pre-prod/prod environments, 
+##  ENVIRONMENT: The CAS environment this JSON file is associated with.
+##  At USF we use multiple CAS instances and have dev/pre-prod/prod environments,
 ##  so ours look like this:
 ##     LDAP authenticated                  Social network authenticated
 ##     Development/netid                   Development/social
@@ -42,11 +42,11 @@ case "$1" in
 	fi
 
 	;;
-"post")	echo "Starting Post-Processing..."	
+"post")	echo "Starting Post-Processing..."
 	cp $3 $LOCAL_REPO/$FILENAME
 	json-to-csv --input $LOCAL_REPO/$FILENAME --output $LOCAL_REPO/$FILENAME.csv
 
 	svn ci -m "$JIRA_ISSUE #comment Automatic commit from cas-json-tool" $LOCAL_REPO
-			
+
 	;;
 esac
