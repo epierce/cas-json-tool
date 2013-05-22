@@ -1,4 +1,4 @@
-package edu.usf.cas
+package edu.usf.cims.cas.jsontool
 
 import groovy.json.*
 import groovy.util.CliBuilder
@@ -6,7 +6,7 @@ import org.apache.commons.cli.Option
 
 class JsonServiceRegistryTool {
 
-	static def version = "0.2.0"
+	static def version = "0.2.5"
 	static def outputFile
 
 	public static void main(String[] args) {

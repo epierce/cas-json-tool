@@ -1,5 +1,7 @@
+.gradle
 .svn/
 target/
+build/
 *.class
 
 # Package Files #

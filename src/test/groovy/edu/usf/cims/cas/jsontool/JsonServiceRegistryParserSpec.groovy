@@ -1,4 +1,4 @@
-package edu.usf.cas
+package edu.usf.cims.cas.jsontool
 
 import spock.lang.*
 
@@ -23,7 +23,7 @@ class JsonServiceRegistryParserSpec extends spock.lang.Specification {
         jsonParser.setJsonData(object)
 
         then:
-        thrown(edu.usf.cas.JsonServiceRegistryFileFormatException)
+        thrown(JsonServiceRegistryFileFormatException)
     }
 
     def "input file with valid JSON ServiceRegistry"() {

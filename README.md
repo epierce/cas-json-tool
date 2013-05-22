@@ -4,29 +4,16 @@
 JSON-based CAS ServiceRegistry configuration file editor.  This command creates/modifies JSON files that are compatible with [JsonServiceRegistryDao](https://github.com/Unicon/cas-addons/blob/master/src/main/java/net/unicon/cas/addons/serviceregistry/JsonServiceRegistryDao.java).
 
 ## Build
-You can build the project from source using the following Maven command:
+You can build the project from source using the following command:
 
-     mvn clean package
+     ./gradlew distZip  (gradlew.bat distZip on Windows)
      
-Once the build is complete, you will be left with two jar files in the `target` directory:
+Once the build is complete, you will be left with a zip file in the `build/distributions` directory:
 
-     cas-json-tool-0.2.0.jar
-     cas-json-tool-0.2.0-jar-with-dependencies.jar
-
-You can use either version, but the one including the dependencies has been slightly faster in my testing.
+     cas-json-tool-0.2.5.zip
 
 ## Install
-I've included an installer script `install_tool.sh` that takes a single parameter: the directory to install cas-json-tool in:
-
-    sudo ./install_tool.sh /usr/local/apps
-
-    Creating directory structure
-
-    cas-json-tool installation complete!
-
-    Please add the following lines to your .bashrc or .bash_profile
-    export CASTOOL_HOME=/usr/local/apps/cas-json-tool
-    export PATH="$PATH:$CASTOOL_HOME/bin"
+Just move the zip file and extract it whereever you want to install it. Make sure to at the `cas-json-tool-0.2.5/bin` directory to your `$PATH` 
 
 The install command creates a new directory (cas-json-tool-0.2.0) that contains all of the necessary jar files and some shell/groovy scripts:
 
