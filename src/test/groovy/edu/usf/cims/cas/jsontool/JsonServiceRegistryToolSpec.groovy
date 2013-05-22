@@ -1,4 +1,4 @@
-package edu.usf.cas
+package edu.usf.cims.cas.jsontool
 
 import spock.lang.*
 import groovy.json.*
