@@ -1,4 +1,4 @@
-package edu.usf.cas
+package edu.usf.cims.cas.jsontool
 	
 import groovy.json.*
 import org.springframework.util.AntPathMatcher
@@ -12,7 +12,7 @@ import net.unicon.cas.addons.serviceregistry.RegisteredServiceWithAttributesImpl
  * Parses/modifies JSON-based CAS service registry file.
  *
  * @author Eric Pierce (epierce@usf.edu)
- * @version 0.1.2
+ * @version 0.2.5
  */
 class JsonServiceRegistryParser {
 
@@ -22,7 +22,6 @@ class JsonServiceRegistryParser {
 	private def allowedExtraAttributes = []
 	private def defaultTheme = "default"
 	
-
 	/**
 	* Class constructor.
 	*/
