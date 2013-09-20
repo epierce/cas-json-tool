@@ -51,6 +51,8 @@ class JsonServiceRegistryTool {
 			r longOpt:'remove', 'remove service', required: false
 			m longOpt:'modify', 'modify service', required: false
 			s longOpt:'search', 'search for a service', required: false
+      _ longOpt:'authzName', args:1, argName:'Attribute Name', 'attribute that contains the authorization data for this service', required: false
+      _ longOpt:'authzValue', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'value list', "attribute values that users must have to access this service (separate multiple with commas)", required: false
 			_ longOpt:'enable', 'enable a disabled service', required: false
 			_ longOpt:'disable', 'disable a service', required: false
 			_ longOpt:'enableSSO', 'enable SSO access', required: false
@@ -165,16 +167,15 @@ class JsonServiceRegistryTool {
       csvOutputFileName = options.csv
       def csvOutputFile = new File(options.csv)
       if (! csvOutputFile.exists()) {
-	csvOutputFile.createNewFile()
-	csvOutputFile.setWritable(true)
-      }else if (! options.force) {
-	throw new FileNotFoundException("${options.csv} already exists.  Use --force to overwrite.")
+        csvOutputFile.createNewFile()
+        csvOutputFile.setWritable(true)
+      } else if (! options.force) {
+        throw new FileNotFoundException("${options.csv} already exists.  Use --force to overwrite.")
       //Make sure the file is writeable now so an exception can be thrown before doing any work
-      }else if (! csvOutputFile.canWrite()) {
-	throw new FileNotFoundException("${options.csv} is not writeable.")
+      } else if (! csvOutputFile.canWrite()) {
+        throw new FileNotFoundException("${options.csv} is not writeable.")
       }
     }
-
 		return  jsonParser
 	}
 
@@ -190,7 +191,10 @@ class JsonServiceRegistryTool {
 		if((opt.enableAnonymous)&&(opt.disableAnonymous)) throw new IllegalArgumentException('--disableAnonymous and --enableAnonymous cannot be used together')
 		if((opt.enableProxy)&&(opt.disableProxy)) throw new IllegalArgumentException('--disableProxy and --enableProxy cannot be used together')
 		if((opt.id)&&(! opt.id.isInteger())) throw new IllegalArgumentException('ServiceID must be an Integer')
+    if((opt.authzName)&&(! opt.authzValue)) throw new IllegalArgumentException('Authorization values are required when passing a authorization attribute name')
+    if((! opt.authzName)&&(opt.authzValue)) throw new IllegalArgumentException('Authorization attribute name required when passing authorization values')
 
+    println opt.authzName
 		//Search and modify require --id
 		if((!opt.id) && ((opt.remove) || (opt.modify))) throw new IllegalArgumentException('Service ID number required!')
 	}

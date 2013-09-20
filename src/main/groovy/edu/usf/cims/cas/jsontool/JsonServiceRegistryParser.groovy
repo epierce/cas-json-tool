@@ -80,6 +80,8 @@ class JsonServiceRegistryParser {
 
 		if(options.release) checkCasAttributes(options.releases) 
 		if(options.extraAttribute) extraServiceAttributes = addExtraServiceAttributes(options, extraServiceAttributes)
+    origService.extraServiceAttributes = addAuthzAttribute(options, origService.extraAttributes)
+
 		checkRequiredExtraAttributes(extraServiceAttributes)
 
 		if((options.userAttribute) && (! options.releases.contains(options.userAttribute))) {
@@ -104,6 +106,7 @@ class JsonServiceRegistryParser {
 			setTheme options.theme ?: defaultTheme
 			setAllowedAttributes options.releases ?: []
 			setExtraAttributes extraServiceAttributes
+      if((options.authzName) && (options.authzValues)) addAuthzAttribute(origService.extraAttributes, options.authzName, options.authzValues)
 			if(options.userAttribute) setUsernameAttribute options.userAttribute
 			if(options.disable) setEnabled false   //Services are enabled by default
 			if(options.disableSSO) setSsoEnabled false   //SSO is enabled by default
@@ -156,10 +159,16 @@ class JsonServiceRegistryParser {
 		//create the extraServiceAttributes map
 		attributeMap.each {
 				extraServiceAttributes.put(it.key,it.value)
-		} 
-
-		return extraServiceAttributes
+		}   
 	}
+
+  def addAuthzAttribute(options, extraServiceAttributes){
+    if(options.authzName && options.authzValue){
+      extraServiceAttributes["authzAttributes"] = [(options.authzName): options.authzValues]
+    }
+
+    return extraServiceAttributes
+  }
 
 	def removeService(id){ 
 		def removeThisService = findById(id)
@@ -169,8 +178,6 @@ class JsonServiceRegistryParser {
 	def modifyService(origService,options){
 		//make sure the attributes (if requested) can be released 
 		if(options.release && options.release != "REMOVE") checkCasAttributes(options.releases)
-
-		
 
 		if(options.enable) origService.enabled = true
 		if(options.disable) origService.enabled = false
@@ -201,9 +208,9 @@ class JsonServiceRegistryParser {
 		}
 		if(options.pattern) origService.serviceId = options.pattern
 		if(options.extraAttribute) origService.extraAttributes = addExtraServiceAttributes(options,origService.extraAttributes)
+    origService.extraServiceAttributes = addAuthzAttribute(options, origService.extraAttributes)
 		origService.extraAttributes.modifiedDate = String.format('%tF %<tT  %<tz', new Date())
 		checkRequiredExtraAttributes(origService.extraAttributes)
-
 		return origService
 	}
 
