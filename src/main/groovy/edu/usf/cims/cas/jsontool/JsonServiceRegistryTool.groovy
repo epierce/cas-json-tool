@@ -13,16 +13,16 @@ class JsonServiceRegistryTool {
 
 	public static void main(String[] args) {
 
-		try {			
+		try {
 			def opt = getCommandLineOptions(args)
 			def config = getConfigSettings(opt)
-		
+
 			runPreProcessor(config, opt)
 
 			def jsonParser = createJSONparser(config,opt)
 
 			def result = runAction(jsonParser,opt)
-		
+
 			printJSON(result)
 
       if(opt.csv) printCSV(result)
@@ -43,7 +43,7 @@ class JsonServiceRegistryTool {
 
 		cli.with {
 			h longOpt:'help', 'usage information', required: false
-			v longOpt:'version', 'version information', required: false  
+			v longOpt:'version', 'version information', required: false
 			i longOpt:'input', args:1, argName:'inputFilename', 'JSON file to read.', required: false
 			o longOpt:'output', args:1, argName:'outputFilename', 'write output to this file.  Prints to STDOUT if omitted', required: false
 			f longOpt:'force', 'overwrite output file', required: false
@@ -85,7 +85,7 @@ class JsonServiceRegistryTool {
 
 		//Display usage if --help is given OR no input file AND not creating a new file
 		if( (options.help) || ((! options.i) && (! options.n)) ){
-			cli.usage() 
+			cli.usage()
 			System.exit(0)
 		}
 
@@ -95,7 +95,7 @@ class JsonServiceRegistryTool {
 	private static getConfigSettings(options){
 		def config = new ConfigObject()
 
-		//Use this theme if one isn't specified with --theme 
+		//Use this theme if one isn't specified with --theme
 		config.defaultTheme = "default"
 		//All attributes that can be released by CAS
 		config.releaseAttributes = []
@@ -108,7 +108,7 @@ class JsonServiceRegistryTool {
 		//Run this command AFTER processing.  the output file is passed as an argument.
 		config.postCommand = ''
 
-		/** Defaut configuration values can be set in $HOME/cas-json-tool-config.groovy **/                   
+		/** Defaut configuration values can be set in $HOME/cas-json-tool-config.groovy **/
 		def defaultConfigFile = new File(System.getProperty("user.home")+'/cas-json-tool-config.groovy')
 
 		//The default file is not required, so if it doesn't exist don't throw an exception
@@ -140,6 +140,13 @@ class JsonServiceRegistryTool {
 			proc.waitFor()
 			println "${proc.in.text}"
 			if (proc.exitValue() != 0) throw new ScriptException("Postprocessor exited with an error!")
+
+			if(options.csv){
+				proc = "${config.postCommand} ${csvOutputFileName}".execute()
+				proc.waitFor()
+				println "${proc.in.text}"
+				if (proc.exitValue() != 0) throw new ScriptException("Postprocessor exited with an error!")
+			}
 		}
 	}
 
@@ -155,7 +162,7 @@ class JsonServiceRegistryTool {
 				jsonOutputFile.setWritable(true)
 			}else if (! options.force) {
 				throw new FileNotFoundException("${options.output} already exists.  Use --force to overwrite.")
-			//Make sure the file is writeable now so an exception can be thrown before doing any work	
+			//Make sure the file is writeable now so an exception can be thrown before doing any work
 			}else if (! jsonOutputFile.canWrite()) {
 				throw new FileNotFoundException("${options.output} is not writeable.")
 			}
@@ -202,7 +209,7 @@ class JsonServiceRegistryTool {
 	/**
 	* Read JSON data from file.  JSON data must contain a list with 0 or more elements named "services"
 	* @param jsonFileName	The file to read from.
-	* @return Object 	JSON Object 
+	* @return Object 	JSON Object
 	* @throws IOException 	If an input exception occurred
 	* @throws JsonException If the included JSON data is malformed
 	*/
@@ -213,7 +220,7 @@ class JsonServiceRegistryTool {
 	}
 
 	private static runAction(jsonParser,options) {
-		
+
 		checkOptions(options)
 
 		//Add a new service
@@ -223,26 +230,26 @@ class JsonServiceRegistryTool {
 		//Remove a service
 		} else if (options.r){
 
-			jsonParser.removeService options.id				
-			
+			jsonParser.removeService options.id
+
 		//Search for a service
 		} else if (options.s){
 			def service = jsonParser.searchForService options
 
-			return service	
+			return service
 		//Modify service
 		} else if (options.m){
-			
+
 			def origService = jsonParser.findById options.id
 			def newService = jsonParser.modifyService(origService[0],options)
-			
+
 			jsonParser.removeService options.id
 			jsonParser.addService newService
-				
+
 		}
-		
+
 		return jsonParser.jsonData
-		
+
 	}
 
 	private static printJSON(data) {
@@ -268,16 +275,14 @@ class JsonServiceRegistryTool {
     data.services.each { service ->
       def csv_line = []
       fieldNames.each { field ->
-	if(service["${field}"]) {
-	  csv_line.add(service["${field}"] as String)
-	} else if (service.extraAttributes["${field}"] as String) {
-	  csv_line.add(service.extraAttributes["${field}"] as String)
-	} else {
-	  csv_line.add('')
-	}
-
+				if(service["${field}"]) {
+				  csv_line.add(service["${field}"] as String)
+				} else if (service.extraAttributes["${field}"] as String) {
+				  csv_line.add(service.extraAttributes["${field}"] as String)
+				} else {
+				  csv_line.add('')
+				}
       }
-
       writer.writeNext(csv_line as String[])
     }
     writer.close()
