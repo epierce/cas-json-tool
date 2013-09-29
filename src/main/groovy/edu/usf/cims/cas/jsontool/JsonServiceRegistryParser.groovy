@@ -1,5 +1,5 @@
 package edu.usf.cims.cas.jsontool
-	
+
 import groovy.json.*
 import org.springframework.util.AntPathMatcher
 import org.jasig.cas.services.RegisteredService
@@ -16,17 +16,17 @@ import net.unicon.cas.addons.serviceregistry.RegisteredServiceWithAttributesImpl
  */
 class JsonServiceRegistryParser {
 
-	private def jsonData 
+	private def jsonData
 	private def casAttributes = []
 	private def requiredExtraAttributes = []
 	private def allowedExtraAttributes = []
 	private def defaultTheme = "default"
-	
+
 	/**
 	* Class constructor.
 	*/
 	def JsonServiceRegistryParser() {
-		jsonData = [ services:[] ] 
+		jsonData = [ services:[] ]
 	}
 
 	def setJsonData(myjsonData) {
@@ -62,7 +62,7 @@ class JsonServiceRegistryParser {
 	}
 
 	def findHighestId(){
-		def idList = [] 
+		def idList = []
 		jsonData.services.each { service ->
 			idList.add(service.id)
 		}
@@ -73,12 +73,12 @@ class JsonServiceRegistryParser {
 
 		def extraServiceAttributes = [createdDate:String.format('%tF %<tT %<tz', new Date())]
 
-		if(!options.name) throw new IllegalArgumentException('Service name required!') 
-		if(!options.desc) throw new IllegalArgumentException('Service description required!') 
+		if(!options.name) throw new IllegalArgumentException('Service name required!')
+		if(!options.desc) throw new IllegalArgumentException('Service description required!')
 		if(!options.pattern) throw new IllegalArgumentException('Regex or Ant pattern required!')
 		if(!options.url) throw new IllegalArgumentException('Test URL required!')
 
-		if(options.release) checkCasAttributes(options.releases) 
+		if(options.release) checkCasAttributes(options.releases)
 
     extraServiceAttributes = addExtraServiceAttributes(options, extraServiceAttributes)
 
@@ -89,7 +89,7 @@ class JsonServiceRegistryParser {
 		}
 
 		def jsonService
- 		if(options.pattern.startsWith('^')){ 
+ 		if(options.pattern.startsWith('^')){
       	jsonService = new RegexRegisteredServiceWithAttributes()
 			def regexPattern = ~/${options.pattern}/
 			if (! regexPattern.matcher(options.url).matches()) throw new IllegalArgumentException('Test URL does not match pattern')
@@ -97,7 +97,7 @@ class JsonServiceRegistryParser {
 			jsonService = new RegisteredServiceWithAttributesImpl()
 			def matcher = new AntPathMatcher()
 			if (! matcher.match(options.pattern.toLowerCase(), options.url.toLowerCase())) throw new IllegalArgumentException('Test URL does not match pattern')
-		} 
+		}
 		jsonService.with {
 			setId findHighestId()+1
 			setName options.name
@@ -106,12 +106,11 @@ class JsonServiceRegistryParser {
 			setTheme options.theme ?: defaultTheme
 			setAllowedAttributes options.releases ?: []
 			setExtraAttributes extraServiceAttributes
-//      if((options.authzName) && (options.authzValues)) addAuthzAttribute(options,extraServiceAttributes)
       if(options.userAttribute) setUsernameAttribute options.userAttribute
 			if(options.disable) setEnabled false   //Services are enabled by default
 			if(options.disableSSO) setSsoEnabled false   //SSO is enabled by default
 			if(options.enableAnonymous) setAnonymousAccess true   //Anonymous is disabled by default
-			if(options.evalOrder) { 
+			if(options.evalOrder) {
 				setEvaluationOrder options.evalOrder.toInteger()
 			} else {
 				setEvaluationOrder 100
@@ -125,7 +124,7 @@ class JsonServiceRegistryParser {
 		jsonData.services.add(service)
 	}
 
-	def addExtraServiceAttributes(options, extraServiceAttributes){	
+	def addExtraServiceAttributes(options, extraServiceAttributes){
 
 		if(options.extraAttributes){
 
@@ -144,11 +143,11 @@ class JsonServiceRegistryParser {
           if(! attributeMap[key]) attributeMap[key] = []
           attributeMap[key]<< value
         }
-      }    
+      }
 
   		//check that all attributes are allowed
   		if (allowedExtraAttributes.size() > 0) {
-  			attributeMap.each { 
+  			attributeMap.each {
   				if(! allowedExtraAttributes.contains(it.key)) throw new IllegalArgumentException("Attribute ${it.key} is not allowed!")
   			}
   		}
@@ -156,7 +155,7 @@ class JsonServiceRegistryParser {
   		//populate the extraServiceAttributes map
   		attributeMap.each {
   				extraServiceAttributes.put(it.key,it.value)
-  		}   
+  		}
     }
 
     //Add the authorization attributes
@@ -175,13 +174,13 @@ class JsonServiceRegistryParser {
     return extraServiceAttributes
   }
 
-	def removeService(id){ 
+	def removeService(id){
 		def removeThisService = findById(id)
 		jsonData.services.remove(removeThisService[0])
 	}
 
 	def modifyService(origService,options){
-		//make sure the attributes (if requested) can be released 
+		//make sure the attributes (if requested) can be released
 		if(options.release && options.release != "REMOVE") checkCasAttributes(options.releases)
 
 		if(options.enable) origService.enabled = true
@@ -236,7 +235,7 @@ class JsonServiceRegistryParser {
 	def findById(id){
 		def foundService = []
 		jsonData.services.each { service ->
-			if(id.toInteger() == service.id) foundService.add(service) 
+			if(id.toInteger() == service.id) foundService.add(service)
 		}
 		if (foundService.size != 1) JsonServiceParserException("Found ${foundService.size} Service IDs that match!")
 		return foundService
@@ -246,7 +245,7 @@ class JsonServiceRegistryParser {
 		def foundService = []
 		def pattern = ~/${namePattern}/
 		jsonData.services.each { service ->
-			if(pattern.matcher(service.name).matches()) foundService.add(service) 
+			if(pattern.matcher(service.name).matches()) foundService.add(service)
 		}
 		return foundService
 	}
@@ -260,7 +259,7 @@ class JsonServiceRegistryParser {
 			} else {
 				def matcher = new AntPathMatcher()
 				if (matcher.match(service.serviceId.toLowerCase(), url.toLowerCase())) foundService.add(service)
-			} 
+			}
 		}
 		return foundService
 	}
