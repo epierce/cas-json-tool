@@ -79,8 +79,8 @@ class JsonServiceRegistryParser {
 		if(!options.url) throw new IllegalArgumentException('Test URL required!')
 
 		if(options.release) checkCasAttributes(options.releases) 
-		if(options.extraAttribute) extraServiceAttributes = addExtraServiceAttributes(options, extraServiceAttributes)
-    origService.extraServiceAttributes = addAuthzAttribute(options, origService.extraAttributes)
+
+    extraServiceAttributes = addExtraServiceAttributes(options, extraServiceAttributes)
 
 		checkRequiredExtraAttributes(extraServiceAttributes)
 
@@ -106,8 +106,8 @@ class JsonServiceRegistryParser {
 			setTheme options.theme ?: defaultTheme
 			setAllowedAttributes options.releases ?: []
 			setExtraAttributes extraServiceAttributes
-      if((options.authzName) && (options.authzValues)) addAuthzAttribute(origService.extraAttributes, options.authzName, options.authzValues)
-			if(options.userAttribute) setUsernameAttribute options.userAttribute
+//      if((options.authzName) && (options.authzValues)) addAuthzAttribute(options,extraServiceAttributes)
+      if(options.userAttribute) setUsernameAttribute options.userAttribute
 			if(options.disable) setEnabled false   //Services are enabled by default
 			if(options.disableSSO) setSsoEnabled false   //SSO is enabled by default
 			if(options.enableAnonymous) setAnonymousAccess true   //Anonymous is disabled by default
@@ -126,40 +126,45 @@ class JsonServiceRegistryParser {
 	}
 
 	def addExtraServiceAttributes(options, extraServiceAttributes){	
-		// Loop through the extraAttributes list and build a map
-		// There must be a cleaner way to do this 
-		int index = 0 
-        def key = null 
-        def attributeMap = [:]
-        options.extraAttributes.each { value-> 
-	        if ((index % 2) == 0) { 
-	            key = value 
-	        } else { 
-	        	if(! attributeMap[key]){
-	        		if (value == 'REMOVE'){
-	        			if(extraServiceAttributes[key]) extraServiceAttributes.remove(key)
-	        		} else {
-	        			attributeMap[key] = [value]
-	        		}
-	        	} else {
-	        		attributeMap[key].add(value)
-	        	} 
-	        } 
-	        index++ 
-        } 
-        if ((index % 2) == 1) attributeMap[key] = null       
-  
-		//check that all attributes are allowed
-		if (allowedExtraAttributes.size() > 0) {
-			attributeMap.each { 
-				if(! allowedExtraAttributes.contains(it.key)) throw new IllegalArgumentException("Attribute ${it.key} is not allowed!")
-			}
-		}
 
-		//create the extraServiceAttributes map
-		attributeMap.each {
-				extraServiceAttributes.put(it.key,it.value)
-		}   
+		if(options.extraAttributes){
+
+      def attributeMap = [:]
+
+      //loop through the atribute list an create a map
+      0.step( options.extraAttributes.size(), 2 ) {
+        def key = options.extraAttributes[it]  // Even numbered list elements are keys
+        def value = options.extraAttributes[it + 1] //Odd numbered are the values
+
+        if (value == 'REMOVE') {
+          //REMOVE is a special case value: remove the attribute from the map
+          if(extraServiceAttributes[key]) extraServiceAttributes.remove(key)
+        } else {
+          // Create an array (if it doesn't exist) and store this value in it
+          if(! attributeMap[key]) attributeMap[key] = []
+          attributeMap[key]<< value
+        }
+      }    
+
+  		//check that all attributes are allowed
+  		if (allowedExtraAttributes.size() > 0) {
+  			attributeMap.each { 
+  				if(! allowedExtraAttributes.contains(it.key)) throw new IllegalArgumentException("Attribute ${it.key} is not allowed!")
+  			}
+  		}
+
+  		//populate the extraServiceAttributes map
+  		attributeMap.each {
+  				extraServiceAttributes.put(it.key,it.value)
+  		}   
+    }
+
+    //Add the authorization attributes
+    if(options.authzName && options.authzValue){
+      extraServiceAttributes["authzAttributes"] = [(options.authzName): options.authzValues]
+    }
+
+    return extraServiceAttributes
 	}
 
   def addAuthzAttribute(options, extraServiceAttributes){
@@ -207,8 +212,7 @@ class JsonServiceRegistryParser {
 			}
 		}
 		if(options.pattern) origService.serviceId = options.pattern
-		if(options.extraAttribute) origService.extraAttributes = addExtraServiceAttributes(options,origService.extraAttributes)
-    origService.extraServiceAttributes = addAuthzAttribute(options, origService.extraAttributes)
+		origService.extraAttributes = addExtraServiceAttributes(options,origService.extraAttributes)
 		origService.extraAttributes.modifiedDate = String.format('%tF %<tT  %<tz', new Date())
 		checkRequiredExtraAttributes(origService.extraAttributes)
 		return origService
