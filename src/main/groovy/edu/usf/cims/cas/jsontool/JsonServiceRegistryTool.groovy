@@ -51,7 +51,8 @@ class JsonServiceRegistryTool {
 			r longOpt:'remove', 'remove service', required: false
 			m longOpt:'modify', 'modify service', required: false
 			s longOpt:'search', 'search for a service', required: false
-      _ longOpt:'authzName', args:1, argName:'Attribute Name', 'attribute that contains the authorization data for this service', required: false
+			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple times)", required: false
+      _ longOpt:'authzName', args:1, argName:'attributeName', 'attribute that contains the authorization data for this service', required: false
       _ longOpt:'authzValue', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'value list', "attribute values that users must have to access this service (separate multiple with commas)", required: false
 			_ longOpt:'enable', 'enable a disabled service', required: false
 			_ longOpt:'disable', 'disable a service', required: false
@@ -71,8 +72,11 @@ class JsonServiceRegistryTool {
 			_ longOpt:'pattern', args:1, argName:'pattern', 'regular expression or ant pattern to match service', required: false
 			_ longOpt:'url', args:1, argName:'url', 'sample URL to test the ant/regex pattern', required: false
 			_ longOpt:'release', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'attribute list', "add to attribute list (separate multiple with commas)"
-			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple times)", required: false
       _ longOpt:'csv', args:1, argName:'CSVfileName', 'Write data to a CSV file', required: false
+      _ longOpt:'mfaAttr', args: 1, argName:'MFA Attribue Name', 'attribute that contains Multi-Factor Auth (MFA) Requirements for this service', required: false
+      _ longOpt:'mfaValue', args: 1, argName:'MFA Attribue Value', 'user group that will be required to use MFA (allowed: ALL, NONE or CHECK_LIST', required: false
+			_ longOpt:'mfaUserAttr', args: 1, argName:'MFA User list Attribue', 'attribute that contains the list of users required to use MFA (requires --mfaValue=CHECK_LIST)', required: false
+			_ longOpt:'mfaUser', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'MFA user list', "usernames that must use MFA (requires --mfaValue=CHECK_LIST) (separate multiple with commas)", required: false
 		}
 
 		def options = cli.parse(args)
@@ -193,17 +197,47 @@ class JsonServiceRegistryTool {
 	}
 
 	private static checkOptions(opt){
-		if((opt.enable)&&(opt.disable)) throw new IllegalArgumentException('--disable and --enable cannot be used together')
-		if((opt.enableSSO)&&(opt.disableSSO)) throw new IllegalArgumentException('--disableSSO and --enableSSO cannot be used together')
-		if((opt.enableAnonymous)&&(opt.disableAnonymous)) throw new IllegalArgumentException('--disableAnonymous and --enableAnonymous cannot be used together')
-		if((opt.enableProxy)&&(opt.disableProxy)) throw new IllegalArgumentException('--disableProxy and --enableProxy cannot be used together')
-		if((opt.id)&&(! opt.id.isInteger())) throw new IllegalArgumentException('ServiceID must be an Integer')
-    if((opt.authzName)&&(! opt.authzValue)) throw new IllegalArgumentException('Authorization values are required when passing a authorization attribute name')
-    if((! opt.authzName)&&(opt.authzValue)) throw new IllegalArgumentException('Authorization attribute name required when passing authorization values')
+		if((opt.enable)&&(opt.disable)) {
+			throw new IllegalArgumentException('--disable and --enable cannot be used together')
+		}
+		if((opt.enableSSO)&&(opt.disableSSO)) {
+			throw new IllegalArgumentException('--disableSSO and --enableSSO cannot be used together')
+		}
+		if((opt.enableAnonymous)&&(opt.disableAnonymous)) {
+			throw new IllegalArgumentException('--disableAnonymous and --enableAnonymous cannot be used together')
+		}
+		if((opt.enableProxy)&&(opt.disableProxy)) {
+			throw new IllegalArgumentException('--disableProxy and --enableProxy cannot be used together')
+		}
+		if((opt.id)&&(! opt.id.isInteger())) {
+			throw new IllegalArgumentException('ServiceID must be an Integer')
+		}
 
-    println opt.authzName
+		if(opt.new){
+    	if((opt.authzName)&&(! opt.authzValue)) {
+    		throw new IllegalArgumentException('Authorization values are required when passing a authorization attribute name')
+    	}
+    	if((! opt.authzName)&&(opt.authzValue)) {
+    		throw new IllegalArgumentException('Authorization attribute name required when passing authorization values')
+    	}
+    	if((! opt.mfaAttr)&&(opt.mfaValue)) {
+    		throw new IllegalArgumentException('MFA attribute name is required when passing a MFA attribute value')
+   		}
+   		if((opt.mfaAttr)&&(!opt.mfaValue)) {
+   			throw new IllegalArgumentException('MFA value is required when passing a MFA attribute name')
+   		}
+    	if((opt.mfaUser)&&((!opt.mfaAttr)||(opt.mfaValue != 'CHECK_LIST')||(! opt.mfaUserAttr))) {
+    		throw new IllegalArgumentException('This option requires --mfaValue=CHECK_LIST and values for --mfaAttr and --mfaUserAttr')
+    	}
+    	if((opt.mfaValue)&&
+    			((opt.mfaValue !='ALL')&&(opt.mfaValue !='NONE')&&(opt.mfaValue !='CHECK_LIST'))) {
+				throw new IllegalArgumentException('mfaValue must be "ALL", "NONE" or "CHECK_LIST"')
+			}
+		}
 		//Search and modify require --id
-		if((!opt.id) && ((opt.remove) || (opt.modify))) throw new IllegalArgumentException('Service ID number required!')
+		if((!opt.id) && ((opt.remove) || (opt.modify))) {
+			throw new IllegalArgumentException('Service ID number required!')
+		}
 	}
 
 	/**
@@ -220,7 +254,6 @@ class JsonServiceRegistryTool {
 	}
 
 	private static runAction(jsonParser,options) {
-
 		checkOptions(options)
 
 		//Add a new service

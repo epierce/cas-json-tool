@@ -163,6 +163,13 @@ class JsonServiceRegistryParser {
       extraServiceAttributes["authzAttributes"] = [(options.authzName): options.authzValues]
     }
 
+    //Add the MultiFactor authentication attributes
+    if((options.mfaAttr)&&(options.mfaValue)){
+    	extraServiceAttributes[options.mfaAttr] = options.mfaValue
+    }
+    if((options.mfaUserAttr)&&(options.mfaUser)){
+    	extraServiceAttributes[options.mfaUserAttr] = options.mfaUsers
+    }
     return extraServiceAttributes
 	}
 

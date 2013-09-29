@@ -59,7 +59,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         cleanup:
         file.delete()
-    } 
+    }
 
     def "Defaults file"() {
         given:
@@ -80,7 +80,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         config.postCommand == "/bin/false"
         config.requiredExtraAttributes == ["ownerName"]
 
-    }   
+    }
 
     def "PreProcessor Failure"() {
         given:
@@ -242,9 +242,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
     def "--name is required"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
-        String[] args = [   '--new', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+        String[] args = [   '--new',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
@@ -262,9 +262,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
     def "--desc is required"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
-        String[] args = [   '--new', 
-                            '--name=Test Service', 
-                            '--pattern=https://example.org/**', 
+        String[] args = [   '--new',
+                            '--name=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
@@ -283,9 +283,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--enable',
                             '--disable'
@@ -306,9 +306,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--disableSSO',
                             '--enableSSO'
@@ -329,9 +329,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--disableAnonymous',
                             '--enableAnonymous'
@@ -345,16 +345,16 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         then:
         def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "--disableAnonymous and --enableAnonymous cannot be used together"   
+        e.message == "--disableAnonymous and --enableAnonymous cannot be used together"
     }
 
     def "--disableProxy and --enableProxy cannot be used together"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--disableProxy',
                             '--enableProxy'
@@ -375,9 +375,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://notamatch.example.org/index.php'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
@@ -396,9 +396,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=^https://example.org/.*', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=^https://example.org/.*',
                             '--url=https://notamatch.example.org/index.php'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
@@ -417,9 +417,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=^https://example.org/.*', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=^https://example.org/.*',
                             '--url=https://example.org/index.php'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
@@ -440,9 +440,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--extraAttribute=ownerName=Bruce Wayne'
                         ]
@@ -464,9 +464,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--extraAttribute=ownerName=Bruce Wayne'
                         ]
@@ -487,9 +487,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--release=name,email'
                         ]
@@ -512,9 +512,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--userAttribute=email',
                             '--release=name,email'
@@ -539,9 +539,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--release=name,email'
                         ]
@@ -562,9 +562,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--release=name',
                             '--userAttribute=email'
@@ -586,9 +586,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--extraAttribute=ownerName=Bruce Wayne',
                             '--extraAttribute=ownerOrg=Wayne Enterprises'
@@ -614,9 +614,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--authzName=memberOf',
                             '--authzValue=group1,group2'
@@ -639,9 +639,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--authzName=memberOf'
                         ]
@@ -661,9 +661,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--authzValue=group1,group2'
                         ]
@@ -682,9 +682,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--extraAttribute=member=Batman',
                             '--extraAttribute=member=Superman',
@@ -712,9 +712,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
-                            '--desc=Test Service', 
-                            '--pattern=https://example.org/**', 
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--extraAttribute=member=Batman',
                             '--extraAttribute=member=Superman'
@@ -738,13 +738,13 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
-                            '--name=My Service', 
+                            '--name=My Service',
                             '--desc=Test Service',
                             '--theme=JusticeLeague',
                             '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--evalOrder=50',
-                            '--disable', 
+                            '--disable',
                             '--enableAnonymous',
                             '--disableSSO',
                             '--enableProxy'
@@ -954,9 +954,17 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
     def "Require authzValue when authzName is given"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
-        String[] args = [   '--modify',
-                            '--id=1',
-                            '--input=src/test/resources/serviceRegistry.json',
+        String[] args = [   '--new',
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--theme=JusticeLeague',
+                            '--pattern=https://example.org/**',
+                            '--url=https://example.org/index.php',
+                            '--evalOrder=50',
+                            '--disable',
+                            '--enableAnonymous',
+                            '--disableSSO',
+                            '--enableProxy',
                             '--authzName=memberOf'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
@@ -964,7 +972,6 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         config.allowedExtraAttributes = ['contactEmail','contactName']
         config.requiredExtraAttributes = ['contactEmail', 'contactName']
         def jsonParser = jsonTool.createJSONparser(config,opt)
-        assert jsonParser.jsonData.services[0].extraAttributes.contactEmail == ["admin@example.edu"]
 
         when:
         def result = jsonTool.runAction(jsonParser,opt)
@@ -977,9 +984,17 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
     def "Require authzValue when authzName is given"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
-        String[] args = [   '--modify',
-                            '--id=1',
-                            '--input=src/test/resources/serviceRegistry.json',
+        String[] args = [   '--new',
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--theme=JusticeLeague',
+                            '--pattern=https://example.org/**',
+                            '--url=https://example.org/index.php',
+                            '--evalOrder=50',
+                            '--disable',
+                            '--enableAnonymous',
+                            '--disableSSO',
+                            '--enableProxy',
                             '--authzValue=group1,group2'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
@@ -987,7 +1002,6 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         config.allowedExtraAttributes = ['contactEmail','contactName']
         config.requiredExtraAttributes = ['contactEmail', 'contactName']
         def jsonParser = jsonTool.createJSONparser(config,opt)
-        assert jsonParser.jsonData.services[0].extraAttributes.contactEmail == ["admin@example.edu"]
 
         when:
         def result = jsonTool.runAction(jsonParser,opt)
@@ -995,6 +1009,158 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         then:
         def e = thrown(java.lang.IllegalArgumentException)
         e.message == "Authorization attribute name required when passing authorization values"
+    }
+
+   def "Enable MFA"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--new',
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--theme=JusticeLeague',
+                            '--pattern=https://example.org/**',
+                            '--url=https://example.org/index.php',
+                            '--evalOrder=50',
+                            '--disable',
+                            '--enableAnonymous',
+                            '--disableSSO',
+                            '--enableProxy',
+                            '--mfaAttr=mfaRequired',
+                            '--mfaValue=ALL'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        notThrown(java.lang.IllegalArgumentException)
+        result.services[0].extraAttributes.mfaRequired == "ALL"
+    }
+
+   def "Enable MFA for some users"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--new',
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--theme=JusticeLeague',
+                            '--pattern=https://example.org/**',
+                            '--url=https://example.org/index.php',
+                            '--evalOrder=50',
+                            '--disable',
+                            '--enableAnonymous',
+                            '--disableSSO',
+                            '--enableProxy',
+                            '--mfaAttr=mfaRequired',
+                            '--mfaValue=CHECK_LIST',
+                            '--mfaUserAttr=mfaRequiredUsers',
+                            '--mfaUser=user1,user2'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        notThrown(java.lang.IllegalArgumentException)
+        result.services[0].extraAttributes.mfaRequired == "CHECK_LIST"
+        result.services[0].extraAttributes.mfaRequiredUsers == ['user1', 'user2']
+    }
+
+    def "Require mfaValue when mfaAttr is given"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--new',
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--theme=JusticeLeague',
+                            '--pattern=https://example.org/**',
+                            '--url=https://example.org/index.php',
+                            '--evalOrder=50',
+                            '--disable',
+                            '--enableAnonymous',
+                            '--disableSSO',
+                            '--enableProxy',
+                            '--mfaAttr=mfaRequired'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        config.allowedExtraAttributes = ['contactEmail','contactName']
+        config.requiredExtraAttributes = ['contactEmail', 'contactName']
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        def e = thrown(java.lang.IllegalArgumentException)
+        e.message == "MFA value is required when passing a MFA attribute name"
+    }
+
+    def "Require mfaAttr when mfaValue is given"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--new',
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--theme=JusticeLeague',
+                            '--pattern=https://example.org/**',
+                            '--url=https://example.org/index.php',
+                            '--evalOrder=50',
+                            '--disable',
+                            '--enableAnonymous',
+                            '--disableSSO',
+                            '--enableProxy',
+                            '--mfaValue=NONE'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        config.allowedExtraAttributes = ['contactEmail','contactName']
+        config.requiredExtraAttributes = ['contactEmail', 'contactName']
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        def e = thrown(java.lang.IllegalArgumentException)
+        e.message == "MFA attribute name is required when passing a MFA attribute value"
+    }
+
+   def "mfaValue must be a known value"() {
+        given:
+        def jsonTool = new JsonServiceRegistryTool()
+        String[] args = [   '--new',
+                            '--name=My Service',
+                            '--desc=Test Service',
+                            '--theme=JusticeLeague',
+                            '--pattern=https://example.org/**',
+                            '--url=https://example.org/index.php',
+                            '--evalOrder=50',
+                            '--disable',
+                            '--enableAnonymous',
+                            '--disableSSO',
+                            '--enableProxy',
+                            '--mfaAttr=mfaRequired',
+                            '--mfaValue=foo'
+                        ]
+        def opt = jsonTool.getCommandLineOptions(args)
+        def config = jsonTool.getConfigSettings(opt)
+        config.allowedExtraAttributes = ['contactEmail','contactName']
+        config.requiredExtraAttributes = ['contactEmail', 'contactName']
+        def jsonParser = jsonTool.createJSONparser(config,opt)
+
+        when:
+        def result = jsonTool.runAction(jsonParser,opt)
+
+        then:
+        def e = thrown(java.lang.IllegalArgumentException)
+        e.message == 'mfaValue must be "ALL", "NONE" or "CHECK_LIST"'
     }
 
     def "Service ID number required for remove"() {
