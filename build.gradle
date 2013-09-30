@@ -1,0 +1,38 @@
+apply plugin: 'groovy'
+apply plugin: 'application'
+group = 'edu.usf.cims'
+version = '0.3.0'
+mainClassName = 'edu.usf.cims.cas.jsontool.JsonServiceRegistryTool'
+
+repositories {
+    // The jar for the xmldsig library is hosted on a Jasig server
+    maven {
+      url 'http://repo1.maven.org/maven2'
+      artifactUrls "http://developer.ja-sig.org/maven2"
+    }
+    mavenCentral()
+    mavenLocal()
+}
+
+project.ext {
+  groovyVersion = '2.0.5'
+  casVersion = '3.5.2'
+  commonsCliVersion = '1.2'
+  casAddonsVersion = '1.8'
+  spockVersion = '0.7-groovy-2.0'
+  opencsvVersion = '2.3'
+}
+
+dependencies {
+    compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    compile "org.jasig.cas:cas-server-core:${casVersion}"
+    compile "net.unicon.cas:cas-addons:${casAddonsVersion}"
+    compile "commons-cli:commons-cli:${commonsCliVersion}"
+    compile "net.sf.opencsv:opencsv:${opencsvVersion}"
+
+    testCompile "org.spockframework:spock-core:${spockVersion}"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.8'
+}

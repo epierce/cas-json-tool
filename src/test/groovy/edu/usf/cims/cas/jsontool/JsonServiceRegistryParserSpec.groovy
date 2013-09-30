@@ -1,18 +1,17 @@
-package edu.usf.cas
+package edu.usf.cims.cas.jsontool
 
 import spock.lang.*
 
 class JsonServiceRegistryParserSpec extends spock.lang.Specification {
 
     def "Empty JSON Service Registry"() {
-    
         when:
         def jsonParser = new JsonServiceRegistryParser()
 
         then:
         jsonParser.jsonData == [ services:[] ]
     }
-    
+
     def "input file without valid JSON ServiceRegistry"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
@@ -23,7 +22,7 @@ class JsonServiceRegistryParserSpec extends spock.lang.Specification {
         jsonParser.setJsonData(object)
 
         then:
-        thrown(edu.usf.cas.JsonServiceRegistryFileFormatException)
+        thrown(JsonServiceRegistryFileFormatException)
     }
 
     def "input file with valid JSON ServiceRegistry"() {
@@ -40,7 +39,7 @@ class JsonServiceRegistryParserSpec extends spock.lang.Specification {
         jsonParser.jsonData.services[0].name == "Example Application"
         jsonParser.jsonData.services[0].description == "This is an example application"
         jsonParser.jsonData.services[0].ssoEnabled == true
-    }    
+    }
 
 
 }

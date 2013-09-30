@@ -17,7 +17,8 @@
             "evaluationOrder": 100,
             "name": "My Service",
             "allowedAttributes": [
-                
+		"attrib1",
+		"attrib2"
             ]
         }
     ]
