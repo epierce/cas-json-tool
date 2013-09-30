@@ -1,9 +1,9 @@
 apply plugin: 'groovy'
 apply plugin: 'application'
 group = 'edu.usf.cims'
-version = '0.2.5'
+version = '0.3.0'
 mainClassName = 'edu.usf.cims.cas.jsontool.JsonServiceRegistryTool'
-    
+
 repositories {
     // The jar for the xmldsig library is hosted on a Jasig server
     maven {
@@ -18,7 +18,7 @@ project.ext {
   groovyVersion = '2.0.5'
   casVersion = '3.5.2'
   commonsCliVersion = '1.2'
-  casAddonsVersion = '1.5'
+  casAddonsVersion = '1.8'
   spockVersion = '0.7-groovy-2.0'
   opencsvVersion = '2.3'
 }
@@ -30,9 +30,9 @@ dependencies {
     compile "commons-cli:commons-cli:${commonsCliVersion}"
     compile "net.sf.opencsv:opencsv:${opencsvVersion}"
 
-    testCompile "org.spockframework:spock-core:${spockVersion}" 
+    testCompile "org.spockframework:spock-core:${spockVersion}"
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.6'
+    gradleVersion = '1.8'
 }
