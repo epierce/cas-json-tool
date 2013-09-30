@@ -12,7 +12,7 @@ import net.unicon.cas.addons.serviceregistry.RegisteredServiceWithAttributesImpl
  * Parses/modifies JSON-based CAS service registry file.
  *
  * @author Eric Pierce (epierce@usf.edu)
- * @version 0.2.5
+ * @version 0.3.0
  */
 class JsonServiceRegistryParser {
 
