@@ -12,7 +12,7 @@ import net.unicon.cas.addons.serviceregistry.RegisteredServiceWithAttributesImpl
  * Parses/modifies JSON-based CAS service registry file.
  *
  * @author Eric Pierce (epierce@usf.edu)
- * @version 0.3.0
+ * @version 0.3.1
  */
 class JsonServiceRegistryParser {
 
@@ -159,8 +159,9 @@ class JsonServiceRegistryParser {
     }
 
     //Add the authorization attributes
-    if(options.authzName && options.authzValue){
+    if(options.authzName && options.authzValue && options.authzUrl){
       extraServiceAttributes["authzAttributes"] = [(options.authzName): options.authzValues]
+      extraServiceAttributes["unauthorizedRedirectUrl"] = options.authzUrl
     }
 
     //Add the MultiFactor authentication attributes

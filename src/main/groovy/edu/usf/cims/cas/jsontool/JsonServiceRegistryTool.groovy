@@ -7,7 +7,7 @@ import au.com.bytecode.opencsv.CSVWriter
 
 class JsonServiceRegistryTool {
 
-	static def version = "0.3.0"
+	static def version = "0.3.1"
   static def jsonOutputFile
   static def csvOutputFileName
 
@@ -53,6 +53,7 @@ class JsonServiceRegistryTool {
 			s longOpt:'search', 'search for a service', required: false
 			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple times)", required: false
       _ longOpt:'authzName', args:1, argName:'attributeName', 'attribute that contains the authorization data for this service', required: false
+      _ longOpt:'authzUrl', args:1, argName:'error URL', 'URL user will be directed to if authprization fails', required: false
       _ longOpt:'authzValue', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'value list', "attribute values that users must have to access this service (separate multiple with commas)", required: false
 			_ longOpt:'enable', 'enable a disabled service', required: false
 			_ longOpt:'disable', 'disable a service', required: false
@@ -214,17 +215,20 @@ class JsonServiceRegistryTool {
 		}
 
 		if(opt.new){
+			if((opt.authzName)&&(! opt.authzUrl)) {
+    		throw new IllegalArgumentException('Authorization error URL (--authzUrl) required when passing a authorization attribute name')
+    	}
     	if((opt.authzName)&&(! opt.authzValue)) {
-    		throw new IllegalArgumentException('Authorization values are required when passing a authorization attribute name')
+    		throw new IllegalArgumentException('Authorization values (--authzValue) are required when passing a authorization attribute name')
     	}
     	if((! opt.authzName)&&(opt.authzValue)) {
-    		throw new IllegalArgumentException('Authorization attribute name required when passing authorization values')
+    		throw new IllegalArgumentException('Authorization attribute name (--authzName) required when passing authorization values')
     	}
     	if((! opt.mfaAttr)&&(opt.mfaValue)) {
-    		throw new IllegalArgumentException('MFA attribute name is required when passing a MFA attribute value')
+    		throw new IllegalArgumentException('MFA attribute name (--mfaAttr) required when passing a MFA attribute value')
    		}
    		if((opt.mfaAttr)&&(!opt.mfaValue)) {
-   			throw new IllegalArgumentException('MFA value is required when passing a MFA attribute name')
+   			throw new IllegalArgumentException('MFA value (--mfaValue) required when passing a MFA attribute name')
    		}
     	if((opt.mfaUser)&&((!opt.mfaAttr)||(opt.mfaValue != 'CHECK_LIST')||(! opt.mfaUserAttr))) {
     		throw new IllegalArgumentException('This option requires --mfaValue=CHECK_LIST and values for --mfaAttr and --mfaUserAttr')
