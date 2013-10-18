@@ -25,7 +25,7 @@ class JsonServiceRegistryTool {
 
 			printJSON(result)
 
-      if(opt.csv) printCSV(result)
+      if(opt.csv || config.autoCSV) printCSV(result)
 
 			runPostProcessor(config,opt)
 
@@ -112,6 +112,8 @@ class JsonServiceRegistryTool {
 		config.preCommand = ''
 		//Run this command AFTER processing.  the output file is passed as an argument.
 		config.postCommand = ''
+		//Always output a CSV file when writing a JSON file (.json file ending will be replaced with .csv)
+		config.autoCSV = false
 
 		/** Defaut configuration values can be set in $HOME/cas-json-tool-config.groovy **/
 		def defaultConfigFile = new File(System.getProperty("user.home")+'/cas-json-tool-config.groovy')
@@ -146,7 +148,8 @@ class JsonServiceRegistryTool {
 			println "${proc.in.text}"
 			if (proc.exitValue() != 0) throw new ScriptException("Postprocessor exited with an error!")
 
-			if(options.csv){
+			//Process the CSV file
+			if(options.csv || config.autoCSV){
 				proc = "${config.postCommand} ${csvOutputFileName}".execute()
 				proc.waitFor()
 				println "${proc.in.text}"
@@ -159,6 +162,7 @@ class JsonServiceRegistryTool {
 		def jsonParser = new JsonServiceRegistryParser()
 		setDefaults(jsonParser,config)
 
+		//Create a writeable JSON file
 		if(options.input) jsonParser.setJsonData(readInputFile(options.input))
 		if(options.output) {
 			jsonOutputFile = new File(options.output)
@@ -175,17 +179,19 @@ class JsonServiceRegistryTool {
 			jsonOutputFile = false
 		}
 
-    if(options.csv) {
-      csvOutputFileName = options.csv
-      def csvOutputFile = new File(options.csv)
+		//Create the CSV file if needed
+    if(options.csv || (config.autoCSV && options.output)) {
+    	//use --csv if passed, otherwise replace the file extension of the JSON file with csv
+      csvOutputFileName = options.csv ?: options.output.replaceFirst(~/\.[^\.]+$/, '.csv')
+      def csvOutputFile = new File(csvOutputFileName)
       if (! csvOutputFile.exists()) {
         csvOutputFile.createNewFile()
         csvOutputFile.setWritable(true)
       } else if (! options.force) {
-        throw new FileNotFoundException("${options.csv} already exists.  Use --force to overwrite.")
+        throw new FileNotFoundException("${csvOutputFileName} already exists.  Use --force to overwrite.")
       //Make sure the file is writeable now so an exception can be thrown before doing any work
       } else if (! csvOutputFile.canWrite()) {
-        throw new FileNotFoundException("${options.csv} is not writeable.")
+        throw new FileNotFoundException("${csvOutputFileName} is not writeable.")
       }
     }
 		return  jsonParser
@@ -305,9 +311,20 @@ class JsonServiceRegistryTool {
   private static printCSV(data) {
     def writer = new CSVWriter(new FileWriter(csvOutputFileName))
 
-    def fieldNames = ['createdDate','modifiedDate','id','name','description','serviceId','enabled','allowedAttributes','contactEmail','contactDept','contactName','contactPhone','ssoEnabled','allowedToProxy','anonymousAccess','evaluationOrder','theme','ignoreAttributes'] as String[]
+		def fieldNames = []
 
-    writer.writeNext(fieldNames)
+		data.services.each() { service ->
+	    service.each() { key, value ->
+	      fieldNames << key
+	      if (value instanceof Map){
+          value.each() { vkey, vvalue ->
+          	fieldNames << vkey
+          }
+	      }
+	    }
+		}
+
+    writer.writeNext(fieldNames.unique() as String[])
 
     data.services.each { service ->
       def csv_line = []
