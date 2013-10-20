@@ -3,6 +3,7 @@ package edu.usf.cims.cas.jsontool
 import groovy.json.*
 import groovy.util.CliBuilder
 import org.apache.commons.cli.Option
+import org.jasig.cas.services.AbstractRegisteredService
 import au.com.bytecode.opencsv.CSVWriter
 
 class JsonServiceRegistryTool {
@@ -311,26 +312,38 @@ class JsonServiceRegistryTool {
   private static printCSV(data) {
     def writer = new CSVWriter(new FileWriter(csvOutputFileName))
 
+    //Create column headers
 		def fieldNames = []
-
 		data.services.each() { service ->
-	    service.each() { key, value ->
-	      fieldNames << key
-	      if (value instanceof Map){
-          value.each() { vkey, vvalue ->
-          	fieldNames << vkey
-          }
-	      }
-	    }
-		}
+			//New service objects are children of AbstractRegisteredService
+			if(service instanceof AbstractRegisteredService){
+				//Use all the propeties except "class"
+				fieldNames = fieldNames + service.metaClass.properties*.name - "class"
 
+				/* Add a propertyMissing method to this object so we won't throw an exception later
+				 * if we request a property that doesn't exist
+				 */
+				 service.metaClass.propertyMissing = { name -> null }
+			} else {
+				//Services loaded from exisitng JSON files are HashMaps
+		    service.each() { key, value ->
+		      fieldNames << key
+		      if (value instanceof Map){
+		  value.each() { vkey, vvalue ->
+			fieldNames << vkey
+		  }
+		      }
+		    }
+		  }
+		}
     writer.writeNext(fieldNames.unique() as String[])
 
+    //Save each service to single line
     data.services.each { service ->
       def csv_line = []
       fieldNames.each { field ->
-				if(service["${field}"]) {
-				  csv_line.add(service["${field}"] as String)
+				if(service."${field}") {
+				  csv_line.add(service."${field}" as String)
 				} else if (service.extraAttributes["${field}"] as String) {
 				  csv_line.add(service.extraAttributes["${field}"] as String)
 				} else {
