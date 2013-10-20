@@ -8,3 +8,5 @@ requiredExtraAttributes = ["ownerName"]
 
 preCommand = '/bin/true'
 postCommand = '/bin/false'
+
+autoCSV = false

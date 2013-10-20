@@ -239,24 +239,56 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
       file.delete()
     }
 
+    def "Automatically create CSV file"() {
+      given:
+      def jsonTool = new JsonServiceRegistryTool()
+      String[] args = [ '--new',
+			'--name=My Service',
+			'--desc=Test Service',
+			'--input=src/test/resources/serviceRegistry.json',
+			'--pattern=^https://example.org/.*',
+			'--url=https://example.org/index.php',
+			'--output=test.json',
+			'--force'
+		      ]
+      def opt = jsonTool.getCommandLineOptions(args)
+      def config = jsonTool.getConfigSettings(opt)
+      config.autoCSV = true
+
+      when:
+      def jsonParser = jsonTool.createJSONparser(config,opt)
+      def result = jsonTool.runAction(jsonParser,opt)
+      jsonTool.printJSON(result)
+      jsonTool.printCSV(result)
+
+      then:
+      new File("test.json").size() > 0
+      new File("test.csv").size() > 0
+
+      cleanup:
+      new File("test.json").delete()
+      new File("test.csv").delete()
+
+    }
+
     def "--name is required"() {
-        given:
-        def jsonTool = new JsonServiceRegistryTool()
-        String[] args = [   '--new',
-                            '--desc=Test Service',
-                            '--pattern=https://example.org/**',
-                            '--url=https://example.org/index.php'
-                        ]
-        def opt = jsonTool.getCommandLineOptions(args)
-        def config = jsonTool.getConfigSettings(opt)
-        def jsonParser = jsonTool.createJSONparser(config,opt)
+      given:
+      def jsonTool = new JsonServiceRegistryTool()
+      String[] args = [   '--new',
+			  '--desc=Test Service',
+			  '--pattern=https://example.org/**',
+			  '--url=https://example.org/index.php'
+		      ]
+      def opt = jsonTool.getCommandLineOptions(args)
+      def config = jsonTool.getConfigSettings(opt)
+      def jsonParser = jsonTool.createJSONparser(config,opt)
 
-        when:
-        def result = jsonTool.runAction(jsonParser,opt)
+      when:
+      def result = jsonTool.runAction(jsonParser,opt)
 
-        then:
-        def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "Service name required!"
+      then:
+      def e = thrown(java.lang.IllegalArgumentException)
+      e.message == "Service name required!"
     }
 
     def "--desc is required"() {
@@ -436,7 +468,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         result.services[0].extraAttributes.size() == 1
     }
 
-    def "Allow any extra attribute is allowedExtraAttributes is not set"() {
+    def "Allow any extra attribute if allowedExtraAttributes is not set"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
@@ -619,7 +651,8 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
                             '--pattern=https://example.org/**',
                             '--url=https://example.org/index.php',
                             '--authzName=memberOf',
-                            '--authzValue=group1,group2'
+			    '--authzValue=group1,group2',
+			    '--authzUrl=http://example.org/not_authorized.html'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
         def config = jsonTool.getConfigSettings(opt)
@@ -635,7 +668,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         result.services[0].extraAttributes.authzAttributes.memberOf == ["group1","group2"]
     }
 
-    def "Require authzValue when authzName is given"() {
+    def "Require authzUrl when authzName is given"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
@@ -654,10 +687,33 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         then:
         def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "Authorization values are required when passing a authorization attribute name"
+	e.message == "Authorization error URL (--authzUrl) required when passing a authorization attribute name"
     }
 
-    def "Require authzValue when authzName is given"() {
+    def "Require authzValue when authzName and authzUrl are given"() {
+	given:
+	def jsonTool = new JsonServiceRegistryTool()
+	String[] args = [   '--new',
+			    '--name=My Service',
+			    '--desc=Test Service',
+			    '--pattern=https://example.org/**',
+			    '--url=https://example.org/index.php',
+			    '--authzName=memberOf',
+			    '--authzUrl=http://example.org/not_authorized.html'
+			]
+	def opt = jsonTool.getCommandLineOptions(args)
+	def config = jsonTool.getConfigSettings(opt)
+	def jsonParser = jsonTool.createJSONparser(config,opt)
+
+	when:
+	def result = jsonTool.runAction(jsonParser,opt)
+
+	then:
+	def e = thrown(java.lang.IllegalArgumentException)
+	e.message == "Authorization values (--authzValue) are required when passing a authorization attribute name"
+    }
+
+    def "Require authzName when authzValue is given"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
@@ -676,8 +732,9 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         then:
         def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "Authorization attribute name required when passing authorization values"
+	e.message == "Authorization attribute name (--authzName) required when passing authorization values"
     }
+
     def "Create new service with multiple extra attributes"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
@@ -951,7 +1008,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         e.message == "Attribute contactEmail is required!"
     }
 
-    def "Require authzValue when authzName is given"() {
+    def "Require authzUrl when authzName is given"() {
         given:
         def jsonTool = new JsonServiceRegistryTool()
         String[] args = [   '--new',
@@ -978,7 +1035,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         then:
         def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "Authorization values are required when passing a authorization attribute name"
+	e.message == "Authorization error URL (--authzUrl) required when passing a authorization attribute name"
     }
 
     def "Require authzValue when authzName is given"() {
@@ -1008,7 +1065,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         then:
         def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "Authorization attribute name required when passing authorization values"
+	e.message == "Authorization attribute name (--authzName) required when passing authorization values"
     }
 
    def "Enable MFA"() {
@@ -1099,7 +1156,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         then:
         def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "MFA value is required when passing a MFA attribute name"
+	e.message == "MFA value (--mfaValue) required when passing a MFA attribute name"
     }
 
     def "Require mfaAttr when mfaValue is given"() {
@@ -1129,7 +1186,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         then:
         def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "MFA attribute name is required when passing a MFA attribute value"
+	e.message == "MFA attribute name (--mfaAttr) required when passing a MFA attribute value"
     }
 
    def "mfaValue must be a known value"() {
