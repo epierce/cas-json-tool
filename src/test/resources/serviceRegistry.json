@@ -19,7 +19,7 @@
             "evaluationOrder": 0,
             "allowedAttributes": [
                 "name",
-                "email" 
+                "email"
             ]
         },
         {
@@ -30,7 +30,11 @@
             "extraAttributes": {
                 "contactEmail": [ "admin@example.edu" ],
                 "contactName": [ "Admin User" ],
-                "createdDate": [ "2012-10-29" ]
+                "createdDate": [ "2012-10-29" ],
+                "myAttribute": [
+                    "foo",
+                    "bar"
+                ]
             },
             "allowedToProxy": true,
             "serviceId": "https://portal.example.edu/**",
@@ -41,7 +45,7 @@
             "evaluationOrder": 0,
             "allowedAttributes": [
                 "name",
-                "email" 
+                "email"
             ]
         },
     ]

@@ -866,27 +866,50 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         result.services.last().extraAttributes.modifiedDate != null
     }
 
-    def "Update release attributes"() {
-        given:
-        def jsonTool = new JsonServiceRegistryTool()
-        String[] args = [   '--modify',
-                            '--id=1',
-                            '--input=src/test/resources/serviceRegistry.json',
-                            '--release=email'
-                        ]
-        def opt = jsonTool.getCommandLineOptions(args)
-        def config = jsonTool.getConfigSettings(opt)
-        config.releaseAttributes = ["name","email"]
-        def jsonParser = jsonTool.createJSONparser(config,opt)
-        assert jsonParser.jsonData.services[0].allowedAttributes == ["name","email"]
+    def "Add release attribute"() {
+      given:
+      def jsonTool = new JsonServiceRegistryTool()
+      String[] args = [   '--modify',
+                          '--id=1',
+                          '--input=src/test/resources/serviceRegistry.json',
+                          '--release=phone'
+                      ]
+      def opt = jsonTool.getCommandLineOptions(args)
+      def config = jsonTool.getConfigSettings(opt)
+      config.releaseAttributes = ["name","email","phone"]
+      def jsonParser = jsonTool.createJSONparser(config,opt)
+      assert jsonParser.jsonData.services[0].allowedAttributes == ["name","email"]
 
-        when:
-        def result = jsonTool.runAction(jsonParser,opt)
+      when:
+      def result = jsonTool.runAction(jsonParser,opt)
 
-        then:
-        notThrown(java.lang.IllegalArgumentException)
-        result.services.last().name == "Example Application"
-        result.services.last().allowedAttributes == ["email"]
+      then:
+      notThrown(java.lang.IllegalArgumentException)
+      result.services.last().name == "Example Application"
+      result.services.last().allowedAttributes == ["name","email","phone"]
+    }
+
+    def "Remove release attribute"() {
+      given:
+      def jsonTool = new JsonServiceRegistryTool()
+      String[] args = [   '--modify',
+                          '--id=1',
+                          '--input=src/test/resources/serviceRegistry.json',
+                          '--release=-email'
+                      ]
+      def opt = jsonTool.getCommandLineOptions(args)
+      def config = jsonTool.getConfigSettings(opt)
+      config.releaseAttributes = ["name","email"]
+      def jsonParser = jsonTool.createJSONparser(config,opt)
+      assert jsonParser.jsonData.services[0].allowedAttributes == ["name","email"]
+
+      when:
+      def result = jsonTool.runAction(jsonParser,opt)
+
+      then:
+      notThrown(java.lang.IllegalArgumentException)
+      result.services.last().name == "Example Application"
+      result.services.last().allowedAttributes == ["name"]
     }
 
     def "Update username attribute"() {
@@ -911,7 +934,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         then:
         notThrown(java.lang.IllegalArgumentException)
         result.services.last().name == "Example Application"
-        result.services.last().allowedAttributes == ["email"]
+        result.services.last().allowedAttributes == ["name","email"]
         result.services.last().usernameAttribute == "email"
     }
 
@@ -921,8 +944,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
         String[] args = [   '--modify',
                             '--id=1',
                             '--input=src/test/resources/serviceRegistry.json',
-                            '--release=email',
-                            '--userAttribute=name'
+                            '--userAttribute=foo'
                         ]
         def opt = jsonTool.getCommandLineOptions(args)
         def config = jsonTool.getConfigSettings(opt)
@@ -936,7 +958,7 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
 
         then:
         def e = thrown(java.lang.IllegalArgumentException)
-        e.message == "Username Attribute name is not being released for this service"
+        e.message == "Username Attribute foo is not being released for this service"
     }
 
     def "Remove release attributes"() {
