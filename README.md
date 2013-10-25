@@ -6,52 +6,57 @@ JSON-based CAS ServiceRegistry configuration file editor.  This command creates/
 ## Build
 You can build the project from source using the following command:
 
-     ./gradlew distZip  (gradlew.bat distZip on Windows)
-     
-Once the build is complete, you will be left with a zip file in the `build/distributions` directory:
+`./gradlew distZip`  (`gradlew.bat distZip` on Windows)
 
-     cas-json-tool-0.3.0.zip
+Once the build is complete, you will be left with a zip file: 
+`build/distributions/cas-json-tool-0.4.0.zip`
 
 ## Install
-Just extract the zip file where you want to install the application. Make sure to add the `cas-json-tool-0.3.0/bin` directory to your `$PATH` 
+Just move the zip file and extract it whereever you want to install it. Make sure to at the `cas-json-tool-0.4.0/bin` directory to your `$PATH` 
 
-The install command creates a new directory (cas-json-tool-0.3.0) that contains all of the necessary jar files and some shell scripts:
+The install command creates a new directory (cas-json-tool-0.4.0) that contains all of the necessary jar files and some shell/groovy scripts:
 
 * bin/cas-json-tool - Bash wrapper script for the cas-json-tool jar file
-* bin/svnProcess and bin/gitProcess - Bash scripts that handle pre/post processing and workflow.
+* bin/svnProcess - Bash script that handles an example pre/post workflow with SVN
+* bin/gitProcess - Bash script that handles an example pre/post workflow with git
 
 ## Configuration
 cas-json-tool will look for `cas-json-tool-config.groovy` in your home directory to read configuration options.  You can specify a different file with `--defaults`
 ### cas-json-tool-config.groovy
-```groovy
+
+```
 //Default theme for CAS login page
 defaultTheme = "default"
 
 //All attributes that can be released by CAS
-releaseAttributes = ["uid", "eduPersonPrimaryAffiliation", "cn", "givenName", "sn", "mail", "phone"]
+releaseAttributes = ["uid","eduPersonPrimaryAffiliation","cn","givenName","sn","mail","phone"]
 
 //Allow these extra attributes.  An empty list allows any attribute
 allowedExtraAttributes = []
 
-//Require these extra attributes for each service.  
+//Require these extra attributes for each service.
 //Attributes in this list are automatically included in allowedExtraAttributes
 requiredExtraAttributes = ["contactName","contactEmail","contactDept","contactPhone"]
-    
+
+//Always output a CSV file when writing a JSON file (.json file ending will be replaced with .csv)
+autoCSV = false
+
 //Run this command BEFORE processing. the input file is passed as an argument.
 preCommand = ''
 //Run this command AFTER processing.  the output file is passed as an argument.
-postCommand = '' 
+postCommand = ''
 ```
- 
+
 ## Usage
 To see a list of all options, use the `--help` argument:
+
 ```
-$ ./cas-json-tool --help
+$ cas-json-tool --help
 usage: cas-json-tool --input service_registry.json [options]
 
 Available options (use -h for help):
     --authzName <attributeName>              attribute that contains the authorization data for this
-                                             service
+    --authzUrl <error URL>                   URL user will be directed to if authprization fails
     --authzValue <value list>                attribute values that users must have to access this
                                              service (separate multiple with commas)
     --csv <CSVfileName>                      Write data to a CSV file
@@ -98,100 +103,101 @@ Available options (use -h for help):
 
 ### Example: Display service registry contents
 Read an existing JSON service-registry file (`example.json`)
+
 ```
-$ cas-json-tool --input example.json 
+$ cas-json-tool --input=example.json
 {
-    "services": [
-        {
-            "enabled": true,
-            "ignoreAttributes": false,
-            "theme": "default",
-            "id": 1,
-            "extraAttributes": {
-                "createdDate": "2012-11-02 09:05:36 -0500"
-            },
-            "allowedToProxy": false,
-            "serviceId": "https://example.org/**",
-            "description": "This is a new service",
-            "name": "My Service",
-            "ssoEnabled": true,
-            "anonymousAccess": false,
-            "evaluationOrder": 100,
-            "allowedAttributes": [
-            
-            ]
-        }
-    ]
+  "services": [
+    {
+      "enabled": true,
+      "ignoreAttributes": false,
+      "theme": "default",
+      "id": 1,
+      "extraAttributes": {
+        "createdDate": "2012-11-02 09:05:36 -0500"
+      },
+      "allowedToProxy": false,
+      "serviceId": "https://example.org/**",
+      "description": "This is a new service",
+      "name": "My Service",
+      "ssoEnabled": true,
+      "anonymousAccess": false,
+      "evaluationOrder": 100,
+      "allowedAttributes": [
+
+      ],
+      "usernameAttribute": null
+    }
+  ]
 }
 ```
-     
+
 ### Example: Create a new service
-Add a new service then save the result as `/tmp/cas_service.json` 
+Add a new service and save the result as `/tmp/cas_service.json` 
+
 ```
-$ cas-json-tool --new \
- --name='My Service' \
- --desc='This is a New Service' \
- --pattern='https://example.org/**' \
- --url='https://example.org/index.php' \
- --output=/tmp/cas_service.json \
- --extraAttribute contactName='Eric Pierce' \
- --extraAttribute contactEmail='epierce@example.edu' \
- --extraAttribute contactPhone='555-555-5555'   
+$ cas-json-tool --new --input=cas_registry.json \
+--name='My Service' \
+--desc='This is a New Service' \
+--pattern='https://example.org/** \
+--url='https://example.org/index.php" \
+--output=/tmp/cas_service.json \
+--extraAttribute contactName='Eric Pierce' \
+--extraAttribute contactEmail='epierce@example.edu' \
+--extraAttribute contactPhone='(555)555-5555' \
+--extraAttribute contactDept='Information Technology'
 ```
 
 ### Example: Search for a service by name
- ```
-$ cas-json-tool \
-  --input=/tmp/cas_service.json \
-  --search \
-  --name="^My Ser.*"
+
+```
+$ cas-json-tool --search --input=/tmp/cas_service.json  --name='^My Ser.*'
 
 [
-     {
-         "enabled": true,
-         "ignoreAttributes": false,
-         "theme": "default",
-         "id": 2,
-         "extraAttributes": {
-             "contactPhone": [
-                 "(555)555-5555"
-             ],
-             "contactEmail": [
-                 "epierce@example.edu"
-             ],
-             "contactName": [
-                 "Eric Pierce"
-             ],
-             "contactDept": [
-                 "Information Technology"
-             ],
-             "createdDate": "2012-11-02 09:05:36 -0500"
-         },
-         "allowedToProxy": false,
-         "serviceId": "https://example.org/**",
-         "description": "This is a New Service",
-         "name": "My Service",
-         "ssoEnabled": true,
-         "anonymousAccess": false,
-         "evaluationOrder": 100,
-         "allowedAttributes": [
+   {
+     "enabled": true,
+     "ignoreAttributes": false,
+     "theme": "default",
+     "id": 2,
+     "extraAttributes": {
+       "contactPhone": [
+           "(555)555-5555"
+       ],
+       "contactEmail": [
+           "epierce@example.edu"
+       ],
+       "contactName": [
+           "Eric Pierce"
+       ],
+       "contactDept": [
+           "Information Technology"
+       ],
+       "createdDate": "2012-11-02 09:05:36 -0500"
+     },
+     "allowedToProxy": false,
+     "serviceId": "https://example.org/**",
+     "description": "This is a New Service",
+     "name": "My Service",
+     "ssoEnabled": true,
+     "anonymousAccess": false,
+     "evaluationOrder": 100,
+     "allowedAttributes": [
 
-         ],
-         "usernameAttribute": null
-     }
+     ],
+     "usernameAttribute": null
+   }
  ]
  ```
-     
+
 ###Example: Modify an existing service, change the name and enable proxy ticket support.  Over-write the input file
-```    
-$ cas-json-tool \
-  --modify \
-  --input=/tmp/cas_service.json \
-  --id=2 \
-  --name="Updated Service" \
-  --enableProxy \
-  --output=/tmp/cas_service.json \
-  --force
+```
+$ cas-json-tool --modify \
+--input=/tmp/cas_service.json \
+--id=2 \
+--name="Updated Service" \
+--enableProxy \
+--output=/tmp/cas_service.json \
+--force
 ```
 
 ###Example: Create a new service with [Role-Based Access Controls](https://github.com/Unicon/cas-addons/wiki/Role-Based-Services-Authorization)
@@ -207,6 +213,7 @@ $ cas-json-tool --new \
  --extraAttribute contactPhone='555-555-5555' \
  --authzName=eduPersonPrimaryAffiliation \
  --authzValue=faculty,staff
+ --authzUrl=http://example.org/notAuthorized.html
 ```
 
 ###Example: Create a new service with [DuoSecurity MultiFactor Authentication](https://github.com/epierce/cas-server-extension-duo)
@@ -220,5 +227,8 @@ $ cas-json-tool --new \
  --extraAttribute contactName='Eric Pierce' \
  --extraAttribute contactEmail='epierce@example.edu' \
  --extraAttribute contactPhone='555-555-5555' \
- --authzName=eduPersonPrimaryAffiliation \
- --authzValue=faculty,staff
+ --mfaAttr=useTwoFactor \
+ --mfaValue=CHECK_LIST \
+ --mfaUserAttr=twoFactorUsers \
+ --mfaUser=alice,bob
+ ```

@@ -12,7 +12,7 @@ import net.unicon.cas.addons.serviceregistry.RegisteredServiceWithAttributesImpl
  * Parses/modifies JSON-based CAS service registry file.
  *
  * @author Eric Pierce (epierce@usf.edu)
- * @version 0.3.0
+ * @version 0.4.0
  */
 class JsonServiceRegistryParser {
 
@@ -35,8 +35,22 @@ class JsonServiceRegistryParser {
 	}
 
 	def setCasAttributes(attributes){
-		casAttributes = attributes
+    casAttributes = attributes
 	}
+
+  def buildAttributeReleaseList(myAttributes){
+    def attributes = []
+    if(myAttributes){
+      myAttributes.each() { attribute ->
+        //Remove attributes that strt with -
+        if(! attribute.startsWith("-")) {
+          if(attribute.startsWith("\\-")) attribute = attribute[1..-1]
+          attributes << attribute
+        }
+      }
+    }
+    return attributes
+  }
 
 	def setDefaultTheme(theme){
 		defaultTheme = theme
@@ -49,8 +63,9 @@ class JsonServiceRegistryParser {
 
 	def checkCasAttributes(releaseList){
 		releaseList.each { attribute ->
+      if (attribute.startsWith("-") || attribute.startsWith("\\-")) attribute = attribute[1..-1]
 			if(! casAttributes.contains(attribute)) throw new IllegalArgumentException("Attribute ${attribute} can not be released")
-		}
+    }
 	}
 
 	def checkRequiredExtraAttributes(extraServiceAttributes){
@@ -104,7 +119,7 @@ class JsonServiceRegistryParser {
 			setDescription options.desc
 			setServiceId options.pattern
 			setTheme options.theme ?: defaultTheme
-			setAllowedAttributes options.releases ?: []
+			setAllowedAttributes buildAttributeReleaseList(options.releases)
 			setExtraAttributes extraServiceAttributes
       if(options.userAttribute) setUsernameAttribute options.userAttribute
 			if(options.disable) setEnabled false   //Services are enabled by default
@@ -130,7 +145,7 @@ class JsonServiceRegistryParser {
 
       def attributeMap = [:]
 
-      //loop through the atribute list an create a map
+      //loop through the attribute list and create a map
       0.step( options.extraAttributes.size(), 2 ) {
         def key = options.extraAttributes[it]  // Even numbered list elements are keys
         def value = options.extraAttributes[it + 1] //Odd numbered are the values
@@ -141,7 +156,15 @@ class JsonServiceRegistryParser {
         } else {
           // Create an array (if it doesn't exist) and store this value in it
           if(! attributeMap[key]) attributeMap[key] = []
-          attributeMap[key]<< value
+
+          // Remove the value if it starts with a minus sign
+          if (value.startsWith('-')) {
+            attributeMap[key] = attributeMap[key] - value[1..-1]
+          } else {
+            // Values that should start with a dash need to be escaped
+            if (value.startsWith("\\-")) value = value[1..-1]
+            attributeMap[key] =  attributeMap[key] + value
+          }
         }
       }
 
@@ -159,8 +182,9 @@ class JsonServiceRegistryParser {
     }
 
     //Add the authorization attributes
-    if(options.authzName && options.authzValue){
+    if(options.authzName && options.authzValue && options.authzUrl){
       extraServiceAttributes["authzAttributes"] = [(options.authzName): options.authzValues]
+      extraServiceAttributes["unauthorizedRedirectUrl"] = options.authzUrl
     }
 
     //Add the MultiFactor authentication attributes
@@ -207,9 +231,20 @@ class JsonServiceRegistryParser {
 				origService.allowedAttributes = []
 				origService.usernameAttribute = null
 			} else {
-				origService.allowedAttributes = options.releases
+        options.releases.each() { attribute ->
+          // Remove the value if it starts with a minus sign
+          if (attribute.startsWith('-')) {
+            origService.allowedAttributes = origService.allowedAttributes - attribute[1..-1]
+          } else {
+            // values that should start with a dash need to be escaped
+            if (attribute.startsWith('\\-')) attribute = attribute[1..-1]
+            origService.allowedAttributes = origService.allowedAttributes + attribute
+          }
+        }
 			}
+      origService.allowedAttributes = origService.allowedAttributes.unique()
 		}
+
 		if(options.userAttribute) {
 			if (! origService.allowedAttributes.contains(options.userAttribute)) {
 				throw new IllegalArgumentException("Username Attribute ${options.userAttribute} is not being released for this service")

@@ -11,6 +11,9 @@ allowedExtraAttributes = []
 //Attributes in this list are automatically included in allowedExtraAttributes
 requiredExtraAttributes = ["contactName","contactEmail","contactDept","contactPhone"]
 
+//Always output a CSV file when writing a JSON file (.json file ending will be replaced with .csv)
+autoCSV = false
+
 //Run this command BEFORE processing. the input file is passed as an argument.
 preCommand = ''
 //Run this command AFTER processing.  the output file is passed as an argument.

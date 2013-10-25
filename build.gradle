@@ -1,7 +1,7 @@
 apply plugin: 'groovy'
 apply plugin: 'application'
 group = 'edu.usf.cims'
-version = '0.3.0'
+version = '0.4.0'
 mainClassName = 'edu.usf.cims.cas.jsontool.JsonServiceRegistryTool'
 
 repositories {

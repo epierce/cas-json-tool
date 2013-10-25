@@ -3,11 +3,12 @@ package edu.usf.cims.cas.jsontool
 import groovy.json.*
 import groovy.util.CliBuilder
 import org.apache.commons.cli.Option
+import org.jasig.cas.services.AbstractRegisteredService
 import au.com.bytecode.opencsv.CSVWriter
 
 class JsonServiceRegistryTool {
 
-	static def version = "0.3.0"
+	static def version = "0.4.0"
   static def jsonOutputFile
   static def csvOutputFileName
 
@@ -25,7 +26,7 @@ class JsonServiceRegistryTool {
 
 			printJSON(result)
 
-      if(opt.csv) printCSV(result)
+      if(opt.csv || config.autoCSV) printCSV(result)
 
 			runPostProcessor(config,opt)
 
@@ -53,6 +54,7 @@ class JsonServiceRegistryTool {
 			s longOpt:'search', 'search for a service', required: false
 			e longOpt:'extraAttribute', args:2, valueSeparator:'=', argName:'attribute=value',"add arbitrary extra attribute/value for this service (can be used multiple times)", required: false
       _ longOpt:'authzName', args:1, argName:'attributeName', 'attribute that contains the authorization data for this service', required: false
+      _ longOpt:'authzUrl', args:1, argName:'error URL', 'URL user will be directed to if authprization fails', required: false
       _ longOpt:'authzValue', args:Option.UNLIMITED_VALUES, valueSeparator: ',' , argName:'value list', "attribute values that users must have to access this service (separate multiple with commas)", required: false
 			_ longOpt:'enable', 'enable a disabled service', required: false
 			_ longOpt:'disable', 'disable a service', required: false
@@ -111,6 +113,8 @@ class JsonServiceRegistryTool {
 		config.preCommand = ''
 		//Run this command AFTER processing.  the output file is passed as an argument.
 		config.postCommand = ''
+		//Always output a CSV file when writing a JSON file (.json file ending will be replaced with .csv)
+		config.autoCSV = false
 
 		/** Defaut configuration values can be set in $HOME/cas-json-tool-config.groovy **/
 		def defaultConfigFile = new File(System.getProperty("user.home")+'/cas-json-tool-config.groovy')
@@ -145,7 +149,8 @@ class JsonServiceRegistryTool {
 			println "${proc.in.text}"
 			if (proc.exitValue() != 0) throw new ScriptException("Postprocessor exited with an error!")
 
-			if(options.csv){
+			//Process the CSV file
+			if(options.csv || config.autoCSV){
 				proc = "${config.postCommand} ${csvOutputFileName}".execute()
 				proc.waitFor()
 				println "${proc.in.text}"
@@ -158,6 +163,7 @@ class JsonServiceRegistryTool {
 		def jsonParser = new JsonServiceRegistryParser()
 		setDefaults(jsonParser,config)
 
+		//Create a writeable JSON file
 		if(options.input) jsonParser.setJsonData(readInputFile(options.input))
 		if(options.output) {
 			jsonOutputFile = new File(options.output)
@@ -174,17 +180,19 @@ class JsonServiceRegistryTool {
 			jsonOutputFile = false
 		}
 
-    if(options.csv) {
-      csvOutputFileName = options.csv
-      def csvOutputFile = new File(options.csv)
+		//Create the CSV file if needed
+    if(options.csv || (config.autoCSV && options.output)) {
+    	//use --csv if passed, otherwise replace the file extension of the JSON file with csv
+      csvOutputFileName = options.csv ?: options.output.replaceFirst(~/\.[^\.]+$/, '.csv')
+      def csvOutputFile = new File(csvOutputFileName)
       if (! csvOutputFile.exists()) {
         csvOutputFile.createNewFile()
         csvOutputFile.setWritable(true)
       } else if (! options.force) {
-        throw new FileNotFoundException("${options.csv} already exists.  Use --force to overwrite.")
+        throw new FileNotFoundException("${csvOutputFileName} already exists.  Use --force to overwrite.")
       //Make sure the file is writeable now so an exception can be thrown before doing any work
       } else if (! csvOutputFile.canWrite()) {
-        throw new FileNotFoundException("${options.csv} is not writeable.")
+        throw new FileNotFoundException("${csvOutputFileName} is not writeable.")
       }
     }
 		return  jsonParser
@@ -214,17 +222,20 @@ class JsonServiceRegistryTool {
 		}
 
 		if(opt.new){
+			if((opt.authzName)&&(! opt.authzUrl)) {
+    		throw new IllegalArgumentException('Authorization error URL (--authzUrl) required when passing a authorization attribute name')
+    	}
     	if((opt.authzName)&&(! opt.authzValue)) {
-    		throw new IllegalArgumentException('Authorization values are required when passing a authorization attribute name')
+    		throw new IllegalArgumentException('Authorization values (--authzValue) are required when passing a authorization attribute name')
     	}
     	if((! opt.authzName)&&(opt.authzValue)) {
-    		throw new IllegalArgumentException('Authorization attribute name required when passing authorization values')
+    		throw new IllegalArgumentException('Authorization attribute name (--authzName) required when passing authorization values')
     	}
     	if((! opt.mfaAttr)&&(opt.mfaValue)) {
-    		throw new IllegalArgumentException('MFA attribute name is required when passing a MFA attribute value')
+    		throw new IllegalArgumentException('MFA attribute name (--mfaAttr) required when passing a MFA attribute value')
    		}
    		if((opt.mfaAttr)&&(!opt.mfaValue)) {
-   			throw new IllegalArgumentException('MFA value is required when passing a MFA attribute name')
+   			throw new IllegalArgumentException('MFA value (--mfaValue) required when passing a MFA attribute name')
    		}
     	if((opt.mfaUser)&&((!opt.mfaAttr)||(opt.mfaValue != 'CHECK_LIST')||(! opt.mfaUserAttr))) {
     		throw new IllegalArgumentException('This option requires --mfaValue=CHECK_LIST and values for --mfaAttr and --mfaUserAttr')
@@ -301,15 +312,38 @@ class JsonServiceRegistryTool {
   private static printCSV(data) {
     def writer = new CSVWriter(new FileWriter(csvOutputFileName))
 
-    def fieldNames = ['createdDate','modifiedDate','id','name','description','serviceId','enabled','allowedAttributes','contactEmail','contactDept','contactName','contactPhone','ssoEnabled','allowedToProxy','anonymousAccess','evaluationOrder','theme','ignoreAttributes'] as String[]
+    //Create column headers
+		def fieldNames = []
+		data.services.each() { service ->
+			//New service objects are children of AbstractRegisteredService
+			if(service instanceof AbstractRegisteredService){
+				//Use all the propeties except "class"
+				fieldNames = fieldNames + service.metaClass.properties*.name - "class"
 
-    writer.writeNext(fieldNames)
+				/* Add a propertyMissing method to this object so we won't throw an exception later
+				 * if we request a property that doesn't exist
+				 */
+				 service.metaClass.propertyMissing = { name -> null }
+			} else {
+				//Services loaded from exisitng JSON files are HashMaps
+		    service.each() { key, value ->
+		      fieldNames << key
+		      if (value instanceof Map){
+		  value.each() { vkey, vvalue ->
+			fieldNames << vkey
+		  }
+		      }
+		    }
+		  }
+		}
+    writer.writeNext(fieldNames.unique() as String[])
 
+    //Save each service to single line
     data.services.each { service ->
       def csv_line = []
       fieldNames.each { field ->
-				if(service["${field}"]) {
-				  csv_line.add(service["${field}"] as String)
+				if(service."${field}") {
+				  csv_line.add(service."${field}" as String)
 				} else if (service.extraAttributes["${field}"] as String) {
 				  csv_line.add(service.extraAttributes["${field}"] as String)
 				} else {

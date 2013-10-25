@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 #######
 ## Pre/Post-Processing example script
-## Eric Pierce (epierce@usf.edu) 9/20/2013
+## Eric Pierce (epierce@usf.edu)
+## Chance Gray (chance@usf.edu)
 ##
 ## This script takes four parameters:
-##   gitProcess ACTION REPO_PATH FILE
+##   gitProcess ACTION REPO_PATH ENVIRO FILE
 ##
 ##  ACTION: either "pre" or "post"
-##      - "pre" ensures the JSON file in SVN matches the one in use
-##      - "post" checks the updated JSON file into SVN
+##      - "pre" ensures the JSON file in git matches the one in use
+##      - "post" checks the updated JSON file into git
 ##
 ##  REPO_PATH: full directory path to the local git repository
 ##
 ##  FILE: JSON file that is being checked in
 #########
-FILENAME=`basename $3`
+# File with list of other nodes if this is part of a CAS cluster
+NODE_LIST="/usr/local/etc/cas-hosts"
+
+FILENAME=`basename $4`
 
 if [ | -d $2/.git ]; then
   echo "$2 is not a git repository!"
@@ -23,37 +27,44 @@ fi
 
 case "$1" in
 
-"pre")	echo "Starting Pre-Processing..."
-	cd $2
+  "pre")  echo "Starting Pre-Processing..."
+    cd $2
 
-  #Pull latest from remote
-  git pull
-  if [ $? -ne 0 ]; then
-    echo "There was a problem pulling the latest version of the file"
-    exit 1
-  fi
+    #Pull latest from remote
+    git pull
+    if [ $? -ne 0 ]; then
+      echo "There was a problem pulling the latest version of the file"
+      exit 1
+    fi
 
-	diff -q $2/$FILENAME $3
+    diff -q $2/$3/$FILENAME $4
 
-	if [ $? == 1 ]; then
-		echo "Current version of JSON file doesn't match latest version in git repo!"
-		exit 1
-	fi
+    if [ $? == 1 ]; then
+      echo "Current version of JSON file doesn't match latest version in git repo!"
+      exit 1
+    fi
 
-	;;
-"post")	echo "Starting Post-Processing..."
-	cp $3 $2/$FILENAME
-  cd $2
+  ;;
+  "post") echo "Starting Post-Processing..."
+    cp $4 $2/$3/$FILENAME
 
-  #Commit
-  git commit -a -m "Automatic commit of modified service registry file from cas-json-tool"
-  if [ $? -ne 0]; then
-    echo "There was a problem committing the file!"
-    exit 1
-  fi
+    #Commit
+    cd $2
+    git commit -a -m "Automatic commit of modified service registry file from cas-json-tool"
+    if [ $? -ne 0]; then
+      echo "There was a problem committing the file!"
+      exit 1
+    fi
 
-  #Push to remote
-  git push --all
+    #Push to remote
+    git push --all
 
-	;;
+    # run `Git pull` on partner cas-servers
+    if [ -a $NODE_LIST ]; then
+      for host in $(cat $NODE_LIST ); do 
+        echo Updating $host
+        ssh $host "(cd $2; git pull)" 
+      done
+    fi
+  ;;
 esac
