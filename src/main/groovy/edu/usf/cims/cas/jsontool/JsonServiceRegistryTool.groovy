@@ -8,7 +8,7 @@ import au.com.bytecode.opencsv.CSVWriter
 
 class JsonServiceRegistryTool {
 
-	static def version = "0.3.2"
+	static def version = "0.4.0"
   static def jsonOutputFile
   static def csvOutputFileName
 
