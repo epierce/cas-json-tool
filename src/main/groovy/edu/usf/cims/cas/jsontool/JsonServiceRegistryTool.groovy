@@ -8,7 +8,7 @@ import au.com.bytecode.opencsv.CSVWriter
 
 class JsonServiceRegistryTool {
 
-	static def version = "0.4.0"
+	static def version = "0.4.1"
   static def jsonOutputFile
   static def csvOutputFileName
 
@@ -26,7 +26,7 @@ class JsonServiceRegistryTool {
 
 			printJSON(result)
 
-      if(opt.csv || config.autoCSV) printCSV(result)
+      if(opt.csv || (config.output && config.autoCSV)) printCSV(result)
 
 			runPostProcessor(config,opt)
 
