@@ -7,7 +7,7 @@ JSON-based CAS ServiceRegistry configuration file editor.  This command creates/
 You can build the project from source using the following command:
 
 `./gradlew distZip`  (`gradlew.bat distZip` on Windows)
-     
+
 Once the build is complete, you will be left with a zip file: 
 `build/distributions/cas-json-tool-0.4.0.zip`
 
@@ -23,6 +23,7 @@ The install command creates a new directory (cas-json-tool-0.4.0) that contains 
 ## Configuration
 cas-json-tool will look for `cas-json-tool-config.groovy` in your home directory to read configuration options.  You can specify a different file with `--defaults`
 ### cas-json-tool-config.groovy
+
 ```
 //Default theme for CAS login page
 defaultTheme = "default"
@@ -44,7 +45,7 @@ autoCSV = false
 preCommand = ''
 //Run this command AFTER processing.  the output file is passed as an argument.
 postCommand = ''
-```    
+```
 
 ## Usage
 To see a list of all options, use the `--help` argument:
@@ -55,7 +56,6 @@ usage: cas-json-tool --input service_registry.json [options]
 
 Available options (use -h for help):
     --authzName <attributeName>              attribute that contains the authorization data for this
-                                             service
     --authzUrl <error URL>                   URL user will be directed to if authprization fails
     --authzValue <value list>                attribute values that users must have to access this
                                              service (separate multiple with commas)
@@ -131,9 +131,9 @@ $ cas-json-tool --input=example.json
   ]
 }
 ```
-     
+
 ### Example: Create a new service
-Add a new  service and save the result as `/tmp/cas_service.json` 
+Add a new service and save the result as `/tmp/cas_service.json` 
 
 ```
 $ cas-json-tool --new --input=cas_registry.json \
@@ -146,10 +146,10 @@ $ cas-json-tool --new --input=cas_registry.json \
 --extraAttribute contactEmail='epierce@example.edu' \
 --extraAttribute contactPhone='(555)555-5555' \
 --extraAttribute contactDept='Information Technology'
-```   
-    
+```
+
 ### Example: Search for a service by name
- 
+
 ```
 $ cas-json-tool --search --input=/tmp/cas_service.json  --name='^My Ser.*'
 
@@ -188,7 +188,7 @@ $ cas-json-tool --search --input=/tmp/cas_service.json  --name='^My Ser.*'
    }
  ]
  ```
-     
+
 ###Example: Modify an existing service, change the name and enable proxy ticket support.  Over-write the input file
 ```
 $ cas-json-tool --modify \
@@ -199,3 +199,36 @@ $ cas-json-tool --modify \
 --output=/tmp/cas_service.json \
 --force
 ```
+
+###Example: Create a new service with [Role-Based Access Controls](https://github.com/Unicon/cas-addons/wiki/Role-Based-Services-Authorization)
+```
+$ cas-json-tool --new \
+ --name='My Service' \
+ --desc='This is a New Service' \
+ --pattern='https://example.org/**' \
+ --url='https://example.org/index.php' \
+ --output=/tmp/cas_service.json \
+ --extraAttribute contactName='Eric Pierce' \
+ --extraAttribute contactEmail='epierce@example.edu' \
+ --extraAttribute contactPhone='555-555-5555' \
+ --authzName=eduPersonPrimaryAffiliation \
+ --authzValue=faculty,staff
+ --authzUrl=http://example.org/notAuthorized.html
+```
+
+###Example: Create a new service with [DuoSecurity MultiFactor Authentication](https://github.com/epierce/cas-server-extension-duo)
+```
+$ cas-json-tool --new \
+ --name='My Service' \
+ --desc='This is a New Service' \
+ --pattern='https://example.org/**' \
+ --url='https://example.org/index.php' \
+ --output=/tmp/cas_service.json \
+ --extraAttribute contactName='Eric Pierce' \
+ --extraAttribute contactEmail='epierce@example.edu' \
+ --extraAttribute contactPhone='555-555-5555' \
+ --mfaAttr=useTwoFactor \
+ --mfaValue=CHECK_LIST \
+ --mfaUserAttr=twoFactorUsers \
+ --mfaUser=alice,bob
+ ```
