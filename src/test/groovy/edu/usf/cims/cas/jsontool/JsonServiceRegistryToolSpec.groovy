@@ -174,6 +174,27 @@ class JsonServiceRegistryToolSpec extends spock.lang.Specification {
       file.delete()
     }
 
+     def "Input file required to overwrite output JSON file"() {
+      given:
+      def file = new File("write_fail.test.json")
+      file.createNewFile()
+
+      def jsonTool = new JsonServiceRegistryTool()
+      String[] args = [ '--force','--csv=write_fail.test.csv']
+      def opt = jsonTool.getCommandLineOptions(args)
+      def config = jsonTool.getConfigSettings(opt)
+
+      when:
+      def jsonParser = jsonTool.createJSONparser(config,opt)
+
+      then:
+      def e = thrown(IllegalArgumentException)
+      e.message == "You must have an input file when overwriting a file"
+
+      cleanup:
+      file.delete()
+    }
+
     def "Force option required to overwrite output CSV file"() {
       given:
       def file = new File("write_fail.test.csv")

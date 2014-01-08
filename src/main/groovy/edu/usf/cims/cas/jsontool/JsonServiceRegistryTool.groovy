@@ -220,6 +220,9 @@ class JsonServiceRegistryTool {
 		if((opt.id)&&(! opt.id.isInteger())) {
 			throw new IllegalArgumentException('ServiceID must be an Integer')
 		}
+		if((opt.force)&&(! opt.input)) {
+			throw new IllegalArgumentException('You must have an input file when overwriting a file!')
+		}
 
 		if(opt.new){
 			if((opt.authzName)&&(! opt.authzUrl)) {
