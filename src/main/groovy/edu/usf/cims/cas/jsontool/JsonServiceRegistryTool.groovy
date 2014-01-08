@@ -8,7 +8,7 @@ import au.com.bytecode.opencsv.CSVWriter
 
 class JsonServiceRegistryTool {
 
-	static def version = "0.4.1"
+	static def version = "0.4.2"
   static def jsonOutputFile
   static def csvOutputFileName
 
@@ -219,6 +219,9 @@ class JsonServiceRegistryTool {
 		}
 		if((opt.id)&&(! opt.id.isInteger())) {
 			throw new IllegalArgumentException('ServiceID must be an Integer')
+		}
+		if((opt.force)&&(! opt.input)) {
+			throw new IllegalArgumentException('You must have an input file when overwriting a file!')
 		}
 
 		if(opt.new){
