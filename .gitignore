@@ -8,3 +8,6 @@ build/
 *.jar
 *.war
 *.ear
+
+# Need this jar for Gradle wrapper
+!gradle-wrapper.jar
